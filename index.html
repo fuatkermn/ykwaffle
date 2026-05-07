@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YK WAFFLE - Online Sipariş</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Crypto Library ÖNCE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- Firebase SDK (Compat - Eski kodlarla uyumlu) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .tab-active { border-bottom: 3px solid #f59e0b; color: #f59e0b; font-weight: 700; }
+        .menu-section { display: none; }
+        .menu-section.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .option-box { border: 2px solid #e5e7eb; border-radius: 0.75rem; padding: 0.75rem; text-align: center; cursor: pointer; transition: all 0.2s; background: white; }
+        .option-box:hover { border-color: #fbbf24; }
+        .option-box.selected { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+        .option-box input { display: none; }
+        .page { display: none; }
+        .page.active { display: block; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .order-type-active { border-color: #f59e0b !important; background: #fffbeb !important; }
+        .payment-active { border-color: #f59e0b !important; background: #fffbeb !important; }
+        .admin-tab-active { background: #fef3c7; color: #92400e; font-weight: 700; }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+    </style>
+</head>
+<body class="bg-amber-50 pb-20">
+
+    <!-- ÜST MENÜ -->
+    <nav class="bg-white shadow-md p-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div id="logo-container" class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
+                <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold select-none">YK</div>
+                <h1 class="text-xl font-bold text-amber-800">YK WAFFLE</h1>
+            </div>
+            <div class="text-amber-700 font-semibold flex items-center gap-2 cursor-pointer" onclick="showPage('cart')">
+                🛒 Sepet (<span id="cart-count">0</span>)
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== ANA SAYFA ===== -->
+    <div id="page-home" class="page active max-w-6xl mx-auto p-6">
+        <div class="bg-gradient-to-r from-amber-400 to-orange-500 rounded-3xl p-8 text-white text-center mb-8 shadow-xl">
+            <h2 class="text-3xl font-bold mb-2">YK WAFFLE'e Hoş Geldiniz! 🧇</h2>
+            <p class="mb-2 opacity-90">Mamak / Ankara'nın en lezzetli waffle'ı</p>
+            <p class="text-sm opacity-80">📍 Yeşilbayır Mah. Sağduyu Cad. 41-G Mamak/Ankara | 📞 0534 721 29 42</p>
+        </div>
+
+        <div class="flex gap-6 border-b border-amber-200 mb-6 overflow-x-auto pb-1">
+            <button onclick="switchTab('ready')" id="tab-ready" class="tab-active pb-3 px-2 whitespace-nowrap">🧇 Hazır Waffle</button>
+            <button onclick="switchTab('custom')" id="tab-custom" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">✨ Kendi Waffle'ım</button>
+            <button onclick="switchTab('cold')" id="tab-cold" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">🥤 Soğuk İçecekler</button>
+            <button onclick="switchTab('hot')" id="tab-hot" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">☕ Sıcak İçecekler</button>
+        </div>
+
+        <!-- Hazır Waffle -->
+        <div id="section-ready" class="menu-section active">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="ready-products">
+                <!-- Ürünler JavaScript ile buraya gelecek -->
+            </div>
+        </div>
+
+        <!-- Kendi Waffle'ım -->
+        <div id="section-custom" class="menu-section">
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <h3 class="text-xl font-bold text-amber-800 mb-4">🎯 Adım 1: Taban Seçimi</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8" id="custom-bases">
+                    <label class="option-box"><input type="radio" name="base" value="Çiçek Waffle|250" onchange="updateCustom()"><div class="font-semibold text-sm">🌸 Çiçek Waffle</div><div class="text-amber-600 text-xs font-bold">250 ₺</div></label>
+                    <label class="option-box"><input type="radio" name="base" value="Bubble Kase|300" onchange="updateCustom()"><div class="font-semibold text-sm">🥣 Bubble Kase</div><div class="text-amber-600 text-xs font-bold">300 ₺</div></label>
+                    <label class="option-box"><input type="radio" name="base" value="Bubble Servis|350" onchange="updateCustom()"><div class="font-semibold text-sm">🍽️ Bubble Servis</div><div class="text-amber-600 text-xs font-bold">350 ₺</div></label>
+                    <label class="option-box"><input type="radio" name="base" value="Bardakta Waffle|200" onchange="updateCustom()"><div class="font-semibold text-sm">🥤 Bardakta</div><div class="text-amber-600 text-xs font-bold">200 ₺</div></label>
+                </div>
+
+                <h3 class="text-xl font-bold text-amber-800 mb-4">🍫 Adım 2: Çikolatalar <span class="text-sm font-normal text-gray-500">(Max 2 - Fazlası +20₺)</span></h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8" id="custom-chocolates">
+                    <label class="option-box"><input type="checkbox" value="Süt Çikolata|0" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Süt Çikolata</div></label>
+                    <label class="option-box"><input type="checkbox" value="Beyaz Çikolata|0" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Beyaz Çikolata</div></label>
+                    <label class="option-box"><input type="checkbox" value="Bitter Çikolata|0" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Bitter Çikolata</div></label>
+                    <label class="option-box"><input type="checkbox" value="Frambuazlı Çikolata|0" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Frambuazlı</div></label>
+                    <label class="option-box"><input type="checkbox" value="Karamelli Çikolata|0" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Karamelli</div></label>
+                    <label class="option-box"><input type="checkbox" value="Bal|25" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Bal <span class="text-red-500 text-xs">+25₺</span></div></label>
+                    <label class="option-box"><input type="checkbox" value="Kitkat|25" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Kitkat <span class="text-red-500 text-xs">+25₺</span></div></label>
+                    <label class="option-box"><input type="checkbox" value="Nutella|25" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Nutella <span class="text-red-500 text-xs">+25₺</span></div></label>
+                    <label class="option-box"><input type="checkbox" value="Saralle|25" data-group="chocolate" onchange="updateCustom()"><div class="text-sm">Saralle <span class="text-red-500 text-xs">+25₺</span></div></label>
+                </div>
+
+                <h3 class="text-xl font-bold text-amber-800 mb-4">🍓 Adım 3: Meyveler <span class="text-sm font-normal text-gray-500">(Max 3 - Fazlası +20₺)</span></h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8" id="custom-fruits">
+                    <label class="option-box"><input type="checkbox" value="Çilek|0" data-group="fruit" onchange="updateCustom()"><div class="text-sm">🍓 Çilek</div></label>
+                    <label class="option-box"><input type="checkbox" value="Muz|0" data-group="fruit" onchange="updateCustom()"><div class="text-sm">🍌 Muz</div></label>
+                    <label class="option-box"><input type="checkbox" value="Kivi|0" data-group="fruit" onchange="updateCustom()"><div class="text-sm">🥝 Kivi</div></label>
+                    <label class="option-box"><input type="checkbox" value="Ananas|0" data-group="fruit" onchange="updateCustom()"><div class="text-sm">🍍 Ananas</div></label>
+                </div>
+
+                <h3 class="text-xl font-bold text-amber-800 mb-4">🍯 Adım 4: Soslar <span class="text-sm font-normal text-gray-500">(Max 2 - Fazlası +20₺)</span></h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8" id="custom-sauces">
+                    <label class="option-box"><input type="checkbox" value="Süt Sos|0" data-group="sauce" onchange="updateCustom()"><div class="text-sm">Süt Sos</div></label>
+                    <label class="option-box"><input type="checkbox" value="Beyaz Sos|0" data-group="sauce" onchange="updateCustom()"><div class="text-sm">Beyaz Sos</div></label>
+                    <label class="option-box"><input type="checkbox" value="Bitter Sos|0" data-group="sauce" onchange="updateCustom()"><div class="text-sm">Bitter Sos</div></label>
+                    <label class="option-box"><input type="checkbox" value="Frambuaz Sos|0" data-group="sauce" onchange="updateCustom()"><div class="text-sm">Frambuaz Sos</div></label>
+                    <label class="option-box"><input type="checkbox" value="Karamel Sos|0" data-group="sauce" onchange="updateCustom()"><div class="text-sm">Karamel Sos</div></label>
+                </div>
+
+                <h3 class="text-xl font-bold text-amber-800 mb-4">🎨 Adım 5: Süslemeler <span class="text-sm font-normal text-gray-500">(Max 3 - Fazlası +20₺)</span></h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8" id="custom-toppings">
+                    <label class="option-box"><input type="checkbox" value="Fındık|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Fındık</div></label>
+                    <label class="option-box"><input type="checkbox" value="Fıstık|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Fıstık</div></label>
+                    <label class="option-box"><input type="checkbox" value="Badem|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Badem</div></label>
+                    <label class="option-box"><input type="checkbox" value="Sütlü Damla|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Sütlü Damla</div></label>
+                    <label class="option-box"><input type="checkbox" value="Beyaz Damla|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Beyaz Damla</div></label>
+                    <label class="option-box"><input type="checkbox" value="Frambuaz Damla|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Frambuaz Damla</div></label>
+                    <label class="option-box"><input type="checkbox" value="Bitter Damla|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Bitter Damla</div></label>
+                    <label class="option-box"><input type="checkbox" value="Bonibon|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Bonibon</div></label>
+                    <label class="option-box"><input type="checkbox" value="Çakıltaşı|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Çakıltaşı</div></label>
+                    <label class="option-box"><input type="checkbox" value="Prinç Patlağı|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Prinç Patlağı</div></label>
+                    <label class="option-box"><input type="checkbox" value="Hindistan Cevizi|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Hindistan Cevizi</div></label>
+                    <label class="option-box"><input type="checkbox" value="Jelibon|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Jelibon</div></label>
+                    <label class="option-box"><input type="checkbox" value="Antep Fıstıklı BT|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Antep Fıstıklı BT</div></label>
+                    <label class="option-box"><input type="checkbox" value="Çilekli BT|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Çilekli BT</div></label>
+                    <label class="option-box"><input type="checkbox" value="Çikolatalı BT|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Çikolatalı BT</div></label>
+                    <label class="option-box"><input type="checkbox" value="Elmalı KK|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Elmalı KK</div></label>
+                    <label class="option-box"><input type="checkbox" value="Muzlu KK|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Muzlu KK</div></label>
+                    <label class="option-box"><input type="checkbox" value="Orman Meyveli KK|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Orman Meyveli KK</div></label>
+                    <label class="option-box"><input type="checkbox" value="Çilekli KK|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Çilekli KK</div></label>
+                    <label class="option-box"><input type="checkbox" value="Portakallı KK|0" data-group="topping" onchange="updateCustom()"><div class="text-sm">Portakallı KK</div></label>
+                    <label class="option-box"><input type="checkbox" value="Oreo|30" data-group="topping" onchange="updateCustom()"><div class="text-sm">Oreo <span class="text-red-500 text-xs">+30₺</span></div></label>
+                </div>
+
+                <div class="bg-amber-50 rounded-xl p-5 border-2 border-amber-200">
+                    <h4 class="font-bold text-amber-800 mb-2">🧾 Özet</h4>
+                    <p id="custom-summary" class="text-sm text-gray-600 mb-3">Henüz bir seçim yapmadınız...</p>
+                    <p id="custom-extra" class="text-sm text-red-500 mb-3 hidden"></p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700 font-semibold">Toplam:</span>
+                        <span id="custom-price" class="text-3xl font-bold text-amber-600">0 ₺</span>
+                    </div>
+                    <button onclick="addCustomToCart()" id="btn-custom-add" disabled class="w-full mt-4 bg-amber-500 text-white py-3 rounded-xl font-bold hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed">Sepete Ekle</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Soğuk İçecekler -->
+        <div id="section-cold" class="menu-section">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="cold-products"></div>
+        </div>
+
+        <!-- Sıcak İçecekler -->
+        <div id="section-hot" class="menu-section">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="hot-products"></div>
+        </div>
+    </div>
+
+    <!-- ===== SEPET ===== -->
+    <div id="page-cart" class="page max-w-6xl mx-auto p-6">
+        <h2 class="text-2xl font-bold text-amber-800 mb-6">🛒 Sepetim</h2>
+        <div id="cart-empty" class="text-center py-12">
+            <div class="text-6xl mb-4">🛒</div>
+            <p class="text-gray-500 text-lg">Sepetiniz boş</p>
+            <button onclick="showPage('home')" class="mt-4 bg-amber-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-amber-600">Menüye Dön</button>
+        </div>
+        <div id="cart-items" class="space-y-4 mb-6 hidden"></div>
+        <div id="cart-summary" class="bg-white rounded-2xl p-6 shadow-lg hidden">
+            <div class="space-y-2 mb-4 border-b pb-4">
+                <div class="flex justify-between text-gray-600"><span>Ara Toplam</span><span id="cart-subtotal" class="font-semibold">0 ₺</span></div>
+                <div class="flex justify-between text-gray-500 text-sm"><span>Teslimat</span><span>Ücretsiz</span></div>
+            </div>
+            <div class="flex justify-between text-xl font-bold text-amber-800 mb-6"><span>Toplam</span><span id="cart-total">0 ₺</span></div>
+            <button onclick="showPage('checkout')" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-600 transition shadow-lg">Siparişi Tamamla</button>
+        </div>
+    </div>
+
+    <!-- ===== CHECKOUT ===== -->
+    <div id="page-checkout" class="page max-w-2xl mx-auto p-6">
+        <h2 class="text-2xl font-bold text-amber-800 mb-6">📋 Sipariş Bilgileri</h2>
+        <div class="bg-white rounded-2xl p-6 shadow-lg space-y-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Sipariş Tipi</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setOrderType('table')" id="order-table" class="order-type-active border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300"><div class="text-3xl mb-2">📱</div><p class="font-bold text-gray-800">Masa Siparişi</p><p class="text-xs text-gray-500">QR ile masadan</p></button>
+                    <button onclick="setOrderType('delivery')" id="order-delivery" class="border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300"><div class="text-3xl mb-2">🛵</div><p class="font-bold text-gray-800">Eve Teslimat</p><p class="text-xs text-gray-500">Adresinize gelsin</p></button>
+                </div>
+            </div>
+            <div id="input-table"><label class="block text-sm font-semibold text-gray-700 mb-2">Masa Numarası</label><input type="number" id="table-number" placeholder="Örn: 5" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
+            <div id="input-delivery" class="hidden space-y-4">
+                <div><label class="block text-sm font-semibold text-gray-700 mb-2">Ad Soyad</label><input type="text" id="customer-name" placeholder="Adınız Soyadınız" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-2">Telefon</label><input type="tel" id="customer-phone" placeholder="05XX XXX XX XX" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-2">Adres</label><textarea id="customer-address" rows="3" placeholder="Sokak, Bina No, Daire, Semt..." class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></textarea></div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Ödeme Yöntemi</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setPayment('card')" id="pay-card" class="payment-active border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300"><div class="text-3xl mb-2">💳</div><p class="font-bold text-gray-800">Kredi Kartı</p></button>
+                    <button onclick="setPayment('cash')" id="pay-cash" class="border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300"><div class="text-3xl mb-2">💵</div><p class="font-bold text-gray-800">Nakit</p></button>
+                </div>
+            </div>
+            <div><label class="block text-sm font-semibold text-gray-700 mb-2">Sipariş Notu (Opsiyonel)</label><textarea id="order-note" rows="2" placeholder="Alerji, özel istek vb." class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></textarea></div>
+            <div class="bg-amber-50 rounded-xl p-4 border-2 border-amber-200">
+                <div class="flex justify-between items-center mb-4"><span class="text-gray-700 font-semibold">Ödenecek Tutar:</span><span id="checkout-total" class="text-3xl font-bold text-amber-600">0 ₺</span></div>
+                <button onclick="placeOrder()" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-600 transition shadow-lg">✅ Siparişi Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BAŞARI ===== -->
+    <div id="page-success" class="page max-w-6xl mx-auto p-6 text-center py-12">
+        <div class="text-8xl mb-6">🎉</div>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">Siparişiniz Alındı!</h2>
+        <p class="text-gray-500 mb-2">Sipariş numaranız:</p>
+        <p id="success-order-id" class="text-4xl font-bold text-amber-600 mb-6">#000</p>
+        <p class="text-gray-600 mb-8 max-w-md mx-auto">Siparişiniz en kısa sürede hazırlanacaktır. Bizi tercih ettiğiniz için teşekkür ederiz!</p>
+        <div class="flex gap-4 justify-center">
+            <button onclick="showPage('home')" class="bg-amber-500 text-white px-8 py-3 rounded-full font-bold hover:bg-amber-600 transition">Ana Sayfa</button>
+            <button onclick="showPage('orders')" class="border-2 border-amber-500 text-amber-600 px-8 py-3 rounded-full font-bold hover:bg-amber-50 transition">Siparişlerim</button>
+        </div>
+    </div>
+
+    <!-- ===== SİPARİŞLERİM ===== -->
+    <div id="page-orders" class="page max-w-6xl mx-auto p-6">
+        <h2 class="text-2xl font-bold text-amber-800 mb-6">📦 Siparişlerim</h2>
+        <div id="orders-list" class="space-y-4"></div>
+        <div id="orders-empty" class="text-center py-12 hidden"><div class="text-6xl mb-4">📭</div><p class="text-gray-500">Henüz siparişiniz bulunmuyor</p></div>
+    </div>
+
+    <!-- ===== ADMIN GİRİŞİ ===== -->
+    <div id="page-admin-login" class="page max-w-md mx-auto p-6 mt-12">
+        <div class="bg-white rounded-2xl p-8 shadow-xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">🔐</span></div>
+                <h2 class="text-2xl font-bold text-gray-800">Admin Girişi</h2>
+                <p class="text-gray-500 text-sm">YK WAFFLE Yönetim Paneli</p>
+            </div>
+            <input type="password" id="admin-password" placeholder="Şifrenizi girin" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-4 focus:border-amber-500 focus:outline-none transition">
+            <button onclick="adminLogin()" class="w-full bg-amber-500 text-white py-3 rounded-xl font-bold hover:bg-amber-600 transition">Giriş Yap</button>
+            <p id="admin-error" class="text-red-500 text-sm mt-3 text-center hidden">Hatalı şifre!</p>
+            <p class="text-xs text-gray-400 text-center mt-4">🔐 Varsayılan şifre: admin123 | JWT Token: 24 saat</p>
+        </div>
+    </div>
+
+    <!-- ===== ADMIN PANELİ ===== -->
+    <div id="page-admin" class="page max-w-6xl mx-auto p-6">
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Sidebar -->
+            <div class="md:w-64 flex-shrink-0">
+                <div class="bg-white rounded-2xl p-4 shadow-lg sticky top-24">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-amber-200">
+                        <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold">A</div>
+                        <div><p class="font-bold text-gray-800">Admin</p><p class="text-xs text-gray-500">YK WAFFLE</p></div>
+                    </div>
+                    <nav class="space-y-2">
+                        <button onclick="switchAdminTab('dashboard')" id="admin-tab-dashboard" class="w-full text-left px-4 py-3 rounded-xl admin-tab-active transition"><span class="mr-2">📊</span> Dashboard</button>
+                        <button onclick="switchAdminTab('orders')" id="admin-tab-orders" class="w-full text-left px-4 py-3 rounded-xl hover:bg-amber-50 text-gray-700 transition"><span class="mr-2">📋</span> Siparişler</button>
+                        <button onclick="switchAdminTab('products')" id="admin-tab-products" class="w-full text-left px-4 py-3 rounded-xl hover:bg-amber-50 text-gray-700 transition"><span class="mr-2">🍽️</span> Ürünler</button>
+                        <button onclick="switchAdminTab('settings')" id="admin-tab-settings" class="w-full text-left px-4 py-3 rounded-xl hover:bg-amber-50 text-gray-700 transition"><span class="mr-2">⚙️</span> Ayarlar</button>
+                        <button onclick="adminLogout()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition mt-4"><span class="mr-2">🚪</span> Çıkış Yap</button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1">
+                <!-- Dashboard -->
+                <div id="admin-section-dashboard" class="admin-section active">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 Dashboard</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-amber-500">
+                            <p class="text-gray-500 text-sm">Toplam Sipariş</p>
+                            <p id="stat-total-orders" class="text-3xl font-bold text-gray-800">0</p>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-green-500">
+                            <p class="text-gray-500 text-sm">Bugünkü Sipariş</p>
+                            <p id="stat-today-orders" class="text-3xl font-bold text-gray-800">0</p>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-blue-500">
+                            <p class="text-gray-500 text-sm">Toplam Kazanç</p>
+                            <p id="stat-total-revenue" class="text-3xl font-bold text-gray-800">0 ₺</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 shadow-sm">
+                        <h3 class="font-bold text-gray-800 mb-4">🕐 Son Siparişler</h3>
+                        <div id="admin-recent-orders" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- Siparişler -->
+                <div id="admin-section-orders" class="admin-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Sipariş Yönetimi</h2>
+                    <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                        <button onclick="filterAdminOrders('all')" class="px-4 py-2 bg-amber-500 text-white rounded-full text-sm font-semibold whitespace-nowrap">Tümü</button>
+                        <button onclick="filterAdminOrders('pending')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold whitespace-nowrap">Bekliyor</button>
+                        <button onclick="filterAdminOrders('preparing')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold whitespace-nowrap">Hazırlanıyor</button>
+                        <button onclick="filterAdminOrders('ready')" class="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold whitespace-nowrap">Hazır</button>
+                        <button onclick="filterAdminOrders('delivered')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-semibold whitespace-nowrap">Teslim Edildi</button>
+                    </div>
+                    <div id="admin-orders-list" class="space-y-4"></div>
+                </div>
+
+                <!-- Ürünler -->
+                <div id="admin-section-products" class="admin-section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">🍽️ Ürün Yönetimi</h2>
+                        <button onclick="alert('Yeni ürün ekleme bir sonraki adımda!')" class="bg-amber-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-amber-600 transition"><span class="mr-1">+</span> Yeni Ürün</button>
+                    </div>
+                    <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+
+                <!-- Ayarlar -->
+                <div id="admin-section-settings" class="admin-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ Site Ayarları</h2>
+                    <div class="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-2">İşletme Adı</label><input type="text" id="setting-name" value="YK WAFFLE" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-2">Telefon</label><input type="text" id="setting-phone" value="0534 721 29 42" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-2">Adres</label><textarea id="setting-address" rows="2" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition">Yeşilbayır Mahallesi / Sağduyu Cad/ 41-G / Mamak- Ankara</textarea></div>
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-2">Admin Şifresi (JWT Protected)</label><input type="password" id="setting-password" placeholder="Yeni şifre girmek için... (min 6 karakter)" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"><p class="text-xs text-gray-500 mt-1">💡 Şifre hash'lenerek kaydedilir. HTML kaynağında görünmez.</p></div>
+                        <button onclick="saveSettings()" class="bg-amber-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-amber-600 transition">💾 Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALT MENÜ -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-amber-200 p-3 z-50">
+        <div class="max-w-6xl mx-auto flex justify-around text-xs text-gray-600">
+            <button onclick="showPage('home')" class="flex flex-col items-center gap-1 hover:text-amber-600 transition p-2"><span class="text-xl">🏠</span><span>Menü</span></button>
+            <button onclick="showPage('cart')" class="flex flex-col items-center gap-1 hover:text-amber-600 transition p-2 relative"><span class="text-xl">🛒</span><span>Sepet</span><span id="nav-cart-badge" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span></button>
+            <button onclick="showPage('orders')" class="flex flex-col items-center gap-1 hover:text-amber-600 transition p-2"><span class="text-xl">📋</span><span>Siparişlerim</span></button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // ========== VERİLER ==========
+        let products = [
+            { id: 'r1', name: 'Sütlü Beyaz', price: 300, category: 'ready', desc: 'Sütlü ve beyaz çikolata' },
+            { id: 'r2', name: 'Lüks Waffle', price: 375, category: 'ready', desc: 'Özel malzemelerle' },
+            { id: 'r3', name: 'Ballı Waffle', price: 375, category: 'ready', desc: 'Doğal bal ile' },
+            { id: 'r4', name: 'Nutella Waffle', price: 375, category: 'ready', desc: 'Orjinal Nutella' },
+            { id: 'r5', name: 'Bubble Kase', price: 375, category: 'ready', desc: 'Kasede servis' },
+            { id: 'r6', name: 'Bubble Servis', price: 550, category: 'ready', desc: 'Özel servis' },
+            { id: 'r7', name: 'Bardakta Waffle', price: 250, category: 'ready', desc: 'Pratik waffle' },
+            { id: 'r8', name: 'Double Waffle', price: 450, category: 'ready', desc: 'İki kat lezzet' },
+            { id: 'c1', name: 'Coca Cola', price: 70, category: 'cold', desc: '330ml' },
+            { id: 'c2', name: 'Fanta', price: 70, category: 'cold', desc: '330ml' },
+            { id: 'c3', name: 'Sprite', price: 70, category: 'cold', desc: '330ml' },
+            { id: 'c4', name: 'Fuse Tea', price: 70, category: 'cold', desc: 'Soğuk çay' },
+            { id: 'c5', name: 'El Yapımı Limonata', price: 70, category: 'cold', desc: 'Taze ev limonatası' },
+            { id: 'c6', name: 'Avşar Soda', price: 45, category: 'cold', desc: 'Meyveli soda' },
+            { id: 'c7', name: 'Sade Soda', price: 20, category: 'cold', desc: '' },
+            { id: 'c8', name: 'Gazoz', price: 50, category: 'cold', desc: '' },
+            { id: 'c9', name: 'Su', price: 20, category: 'cold', desc: '500ml' },
+            { id: 'h1', name: 'Espresso', price: 75, category: 'hot', desc: '' },
+            { id: 'h2', name: 'Cappuccino', price: 75, category: 'hot', desc: '' },
+            { id: 'h3', name: 'Latte', price: 75, category: 'hot', desc: '' },
+            { id: 'h4', name: 'Iced Coffee', price: 75, category: 'hot', desc: '' },
+            { id: 'h5', name: 'Türk Kahvesi', price: 75, category: 'hot', desc: '' },
+            { id: 'h6', name: 'Çay', price: 75, category: 'hot', desc: '' }
+        ];
+
+        let cart = [];
+        let orders = [];
+        let orderType = 'table';
+        let paymentMethod = 'card';
+        let adminPassword = 'admin123'; // Varsayılan şifre
+        let currentAdminFilter = 'all';
+        let db = null;
+        let adminLogs = [];
+        let adminToken = null;
+        let tokenExpiration = null;
+        const JWT_SECRET = 'ykwaffle_secret_key_2024'; // Gizli anahtar
+        const TOKEN_EXPIRY_HOURS = 24; // Token 24 saat geçerli
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkHM4paNBdhC34hX7EiCtZiX3d3x1BI80",
+            authDomain: "ykwaffle-6d9e8.firebaseapp.com",
+            databaseURL: "https://ykwaffle-6d9e8-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "ykwaffle-6d9e8",
+            storageBucket: "ykwaffle-6d9e8.firebasestorage.app",
+            messagingSenderId: "787427052680",
+            appId: "1:787427052680:web:b0bacd262b3f4eefcd233d",
+            measurementId: "G-0RGHDRQBYG"
+        };
+
+        // ========== JWT & HASH FONKSIYONLARI ==========
+        function hashPassword(password) {
+            // SHA256 hash'i kullan
+            return CryptoJS.SHA256(password + JWT_SECRET).toString();
+        }
+
+        function generateJWT(adminName) {
+            const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+            const now = new Date().getTime();
+            const expiry = now + (TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+            
+            const payload = btoa(JSON.stringify({
+                admin: adminName,
+                iat: now,
+                exp: expiry,
+                role: 'admin'
+            }));
+
+            const signature = btoa(CryptoJS.HmacSHA256(header + '.' + payload, JWT_SECRET).toString());
+            const token = header + '.' + payload + '.' + signature;
+            
+            return { token, expiry };
+        }
+
+        function validateJWT(token) {
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) return null;
+
+                const payload = JSON.parse(atob(parts[1]));
+                const now = new Date().getTime();
+
+                if (payload.exp < now) {
+                    console.warn('❌ Token süresi dolmuş');
+                    return null;
+                }
+
+                return payload;
+            } catch (err) {
+                console.error('Token doğrulama hatası:', err);
+                return null;
+            }
+        }
+
+        function getAdminToken() {
+            return localStorage.getItem('ykwaffle_admin_token');
+        }
+
+        function setAdminToken(token, expiry) {
+            localStorage.setItem('ykwaffle_admin_token', token);
+            localStorage.setItem('ykwaffle_token_expiry', expiry);
+            adminToken = token;
+            tokenExpiration = expiry;
+        }
+
+        function clearAdminToken() {
+            localStorage.removeItem('ykwaffle_admin_token');
+            localStorage.removeItem('ykwaffle_token_expiry');
+            adminToken = null;
+            tokenExpiration = null;
+        }
+
+        function isAdminLoggedIn() {
+            const token = getAdminToken();
+            if (!token) return false;
+            
+            const payload = validateJWT(token);
+            if (!payload) {
+                clearAdminToken();
+                return false;
+            }
+            
+            return true;
+        }
+
+        function initFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                loadOrdersFromFirebase();
+                loadOrdersFromLocalStorage();
+                // Kaydedilmiş token varsa yükle
+                const savedToken = getAdminToken();
+                if (savedToken && validateJWT(savedToken)) {
+                    adminToken = savedToken;
+                }
+                console.log('✅ Firebase bağlantısı başarılı');
+            } catch (err) {
+                console.error('Firebase hatası:', err);
+                // Offline mode
+                loadOrdersFromLocalStorage();
+            }
+        }
+
+        // ========== TELEFON DOĞRULAMA ==========
+        function validatePhoneNumber(phone) {
+            // Türkiye telefon formatı: 05XX XXX XX XX veya 5XX XXX XX XX
+            const turkishPhoneRegex = /^(\+90|0)?[5]\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/;
+            const cleanPhone = phone.replace(/\s/g, '');
+            return turkishPhoneRegex.test(cleanPhone);
+        }
+
+        // ========== INPUT SANITIZATION (XSS Koruması) ==========
+        function sanitizeInput(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ========== FIREBASE VERI KAYIT ==========
+        function saveOrderToFirebase(order) {
+            if (!db) {
+                console.warn('Firebase bağlı değil, localStorage kullanılıyor');
+                return;
+            }
+            try {
+                db.ref('orders/' + order.id).set({
+                    ...order,
+                    items: order.items.map(item => ({
+                        name: sanitizeInput(item.name),
+                        price: item.price,
+                        quantity: item.quantity
+                    })),
+                    customer: {
+                        name: sanitizeInput(order.customer.name || ''),
+                        phone: sanitizeInput(order.customer.phone || ''),
+                        address: sanitizeInput(order.customer.address || '')
+                    },
+                    note: sanitizeInput(order.note || '')
+                });
+                console.log('✅ Sipariş Firebase\'e kaydedildi: ' + order.id);
+            } catch (err) {
+                console.error('Firebase kayıt hatası:', err);
+            }
+        }
+
+        function saveAdminLogToFirebase(action, admin, details) {
+            if (!db) return;
+            try {
+                const logId = 'log_' + Date.now();
+                db.ref('admin_logs/' + logId).set({
+                    timestamp: new Date().toLocaleString('tr-TR'),
+                    action: sanitizeInput(action),
+                    admin: sanitizeInput(admin),
+                    details: sanitizeInput(details)
+                });
+            } catch (err) {
+                console.error('Log kayıt hatası:', err);
+            }
+        }
+
+        function loadOrdersFromFirebase() {
+            if (!db) return;
+            try {
+                db.ref('orders').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        orders = Object.values(data).reverse();
+                        renderOrders();
+                        saveOrdersToLocalStorage();
+                    }
+                });
+            } catch (err) {
+                console.error('Firebase yükleme hatası:', err);
+            }
+        }
+
+        // ========== LOCALSTORAGE BACKUP ==========
+        function saveOrdersToLocalStorage() {
+            localStorage.setItem('yk_waffle_orders', JSON.stringify(orders));
+            localStorage.setItem('yk_waffle_timestamp', new Date().toISOString());
+        }
+
+        function loadOrdersFromLocalStorage() {
+            const saved = localStorage.getItem('yk_waffle_orders');
+            if (saved) {
+                try {
+                    orders = JSON.parse(saved);
+                    console.log('✅ ' + orders.length + ' sipariş localStorage\'den yüklendi');
+                } catch (err) {
+                    console.error('localStorage yükleme hatası:', err);
+                }
+            }
+        }
+
+        
+
+        // ========== BAŞLANGIÇ ==========
+        function init() {
+            initFirebase();
+            renderProducts();
+            renderAdminProducts();
+        }
+
+        function renderProducts() {
+            const ready = products.filter(p => p.category === 'ready');
+            const cold = products.filter(p => p.category === 'cold');
+            const hot = products.filter(p => p.category === 'hot');
+
+            document.getElementById('ready-products').innerHTML = ready.map(p => productCard(p)).join('');
+            document.getElementById('cold-products').innerHTML = cold.map(p => drinkCard(p)).join('');
+            document.getElementById('hot-products').innerHTML = hot.map(p => drinkCard(p)).join('');
+        }
+
+        function productCard(p) {
+            return `
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition">
+                    <div class="h-40 bg-amber-200 flex items-center justify-center text-amber-600 text-4xl">${p.category === 'ready' && p.name.includes('Bubble') ? '🥣' : p.name.includes('Bardakta') ? '🥤' : '🧇'}</div>
+                    <div class="p-4">
+                        <h4 class="font-bold text-gray-800">${p.name}</h4>
+                        <p class="text-xs text-gray-500 mb-2">${p.desc}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-amber-600 font-bold text-lg">${p.price} ₺</span>
+                            <button onclick="addToCart('${p.name}', ${p.price})" class="bg-amber-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-amber-600">+ Ekle</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function drinkCard(p) {
+            return `
+                <div class="bg-white rounded-2xl p-4 shadow-sm flex justify-between items-center hover:shadow-md transition">
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">${p.category === 'cold' ? (p.name.includes('Su') ? '💧' : p.name.includes('Soda') ? '💧' : p.name.includes('Gazoz') ? '🍾' : p.name.includes('Limonata') ? '🍋' : p.name.includes('Fuse') ? '🍵' : '🥤') : (p.name.includes('Çay') ? '🫖' : p.name.includes('Iced') ? '🧊' : '☕')}</div>
+                        <div><h4 class="font-bold text-gray-800">${p.name}</h4><p class="text-xs text-gray-500">${p.desc}</p></div>
+                    </div>
+                    <div class="flex items-center gap-3"><span class="text-amber-600 font-bold">${p.price} ₺</span><button onclick="addToCart('${p.name}', ${p.price})" class="bg-amber-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-amber-600">+</button></div>
+                </div>
+            `;
+        }
+
+        // ========== SEPET ==========
+        function addToCart(name, price) {
+            const existing = cart.find(item => item.name === name);
+            if (existing) existing.quantity++;
+            else cart.push({ name, price, quantity: 1 });
+            updateCartUI();
+            alert(name + " sepete eklendi! 🛒");
+        }
+
+        function updateQuantity(index, change) {
+            cart[index].quantity += change;
+            if (cart[index].quantity <= 0) cart.splice(index, 1);
+            renderCart();
+            updateCartUI();
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            renderCart();
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-count').textContent = totalItems;
+            const badge = document.getElementById('nav-cart-badge');
+            if (totalItems > 0) { badge.textContent = totalItems; badge.classList.remove('hidden'); }
+            else badge.classList.add('hidden');
+        }
+
+        function renderCart() {
+            const itemsContainer = document.getElementById('cart-items');
+            const emptyMsg = document.getElementById('cart-empty');
+            const summary = document.getElementById('cart-summary');
+
+            if (cart.length === 0) {
+                itemsContainer.classList.add('hidden'); summary.classList.add('hidden'); emptyMsg.classList.remove('hidden');
+                return;
+            }
+            emptyMsg.classList.add('hidden'); itemsContainer.classList.remove('hidden'); summary.classList.remove('hidden');
+
+            let subtotal = 0;
+            itemsContainer.innerHTML = cart.map((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                return `
+                    <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="flex-1"><h4 class="font-bold text-gray-800">${item.name}</h4><p class="text-amber-600 font-semibold">${item.price} ₺ x ${item.quantity}</p></div>
+                        <div class="flex items-center gap-3 bg-gray-100 rounded-full px-2 py-1">
+                            <button onclick="updateQuantity(${index}, -1)" class="w-8 h-8 rounded-full bg-white shadow text-gray-700 hover:bg-gray-50 font-bold">-</button>
+                            <span class="w-6 text-center font-bold">${item.quantity}</span>
+                            <button onclick="updateQuantity(${index}, 1)" class="w-8 h-8 rounded-full bg-white shadow text-gray-700 hover:bg-gray-50 font-bold">+</button>
+                        </div>
+                        <div class="text-right min-w-[80px]"><p class="font-bold text-gray-800">${itemTotal} ₺</p></div>
+                        <button onclick="removeItem(${index})" class="text-red-400 hover:text-red-600 p-2 text-xl">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('cart-subtotal').textContent = subtotal + ' ₺';
+            document.getElementById('cart-total').textContent = subtotal + ' ₺';
+        }
+
+        // ========== CHECKOUT ==========
+        function updateCheckoutTotal() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('checkout-total').textContent = total + ' ₺';
+        }
+
+        function setOrderType(type) {
+            orderType = type;
+            document.getElementById('order-table').className = type === 'table' ? 'order-type-active border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300' : 'border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300';
+            document.getElementById('order-delivery').className = type === 'delivery' ? 'order-type-active border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300' : 'border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300';
+            document.getElementById('input-table').classList.toggle('hidden', type !== 'table');
+            document.getElementById('input-delivery').classList.toggle('hidden', type !== 'delivery');
+        }
+
+        function setPayment(method) {
+            paymentMethod = method;
+            document.getElementById('pay-card').className = method === 'card' ? 'payment-active border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300' : 'border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300';
+            document.getElementById('pay-cash').className = method === 'cash' ? 'payment-active border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300' : 'border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-amber-300';
+        }
+
+        function placeOrder() {
+            if (cart.length === 0) { alert("Sepetiniz boş!"); return; }
+
+            const tableNo = document.getElementById('table-number').value;
+            const name = document.getElementById('customer-name').value;
+            const phone = document.getElementById('customer-phone').value;
+            const address = document.getElementById('customer-address').value;
+            const note = document.getElementById('order-note').value;
+
+            if (orderType === 'table' && !tableNo) { alert("Lütfen masa numarası girin!"); return; }
+            if (orderType === 'delivery' && (!name || !phone || !address)) { alert("Lütfen tüm adres bilgilerini doldurun!"); return; }
+            
+            // Telefon doğrulama
+            if (orderType === 'delivery' && !validatePhoneNumber(phone)) {
+                alert("❌ Geçersiz telefon numarası!\n\nDoğru format: 05XX XXX XX XX\n\nÖrnek: 0534 721 29 42");
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const order = {
+                id: 'YK' + Date.now().toString().slice(-6),
+                items: [...cart],
+                total,
+                type: orderType,
+                tableNo: tableNo || null,
+                customer: { name: sanitizeInput(name), phone: sanitizeInput(phone), address: sanitizeInput(address) },
+                payment: paymentMethod,
+                note: sanitizeInput(note),
+                status: 'pending',
+                date: new Date().toLocaleString('tr-TR')
+            };
+
+            orders.unshift(order);
+            saveOrderToFirebase(order);
+            saveOrdersToLocalStorage();
+            cart = [];
+            updateCartUI();
+            document.getElementById('success-order-id').textContent = '#' + order.id;
+            showPage('success');
+        }
+
+        // ========== SİPARİŞLERİM ==========
+        function renderOrders() {
+            const container = document.getElementById('orders-list');
+            const empty = document.getElementById('orders-empty');
+            if (orders.length === 0) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+
+            container.innerHTML = orders.map(order => {
+                const statusColors = { pending: 'bg-yellow-100 text-yellow-700', preparing: 'bg-blue-100 text-blue-700', ready: 'bg-green-100 text-green-700', delivered: 'bg-gray-100 text-gray-700' };
+                const statusTexts = { pending: 'Bekliyor', preparing: 'Hazırlanıyor', ready: 'Hazır', delivered: 'Teslim Edildi' };
+                return `
+                    <div class="bg-white rounded-2xl p-5 shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span></div>
+                                <p class="text-xs text-gray-500">${order.date}</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColors[order.status]}">${statusTexts[order.status]}</span>
+                        </div>
+                        <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<p class="text-sm text-gray-600">${item.quantity}x ${item.name}</p>`).join('')}</div>
+                        <div class="flex justify-between items-center border-t pt-3"><span class="text-sm text-gray-500">${order.payment === 'card' ? '💳 Kredi Kartı' : '💵 Nakit'}</span><span class="font-bold text-amber-600 text-lg">${order.total} ₺</span></div>
+                        ${order.note ? `<p class="text-xs text-amber-600 mt-2">📝 ${order.note}</p>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ========== ADMIN ==========
+        function adminLogin() {
+            const pass = document.getElementById('admin-password').value;
+            const passHash = hashPassword(pass);
+            const storedHash = localStorage.getItem('ykwaffle_admin_pass_hash') || hashPassword(adminPassword);
+            
+            if (passHash === storedHash) {
+                document.getElementById('admin-password').value = '';
+                document.getElementById('admin-error').classList.add('hidden');
+                
+                // JWT token oluştur
+                const { token, expiry } = generateJWT('Admin');
+                setAdminToken(token, expiry);
+                
+                // Firebase logging
+                saveAdminLogToFirebase('Admin Girişi', 'Admin', 'Başarılı giriş - ' + new Date().toLocaleTimeString('tr-TR'));
+                alert('✅ Hoş geldiniz! Oturum süresi: 24 saat');
+                showPage('admin');
+                renderAdminDashboard();
+                renderAdminOrders('all');
+            } else {
+                document.getElementById('admin-error').classList.remove('hidden');
+                // Firebase logging - başarısız giriş
+                saveAdminLogToFirebase('Başarısız Giriş Denemesi', 'Bilinmeyen', 'Hatalı şifre - ' + new Date().toLocaleTimeString('tr-TR'));
+            }
+        }
+
+        function adminLogout() {
+            clearAdminToken();
+            saveAdminLogToFirebase('Admin Çıkışı', 'Admin', 'Oturum kapatıldı - ' + new Date().toLocaleTimeString('tr-TR'));
+            alert('✅ Oturum kapatıldı');
+            showPage('home');
+        }
+
+        function switchAdminTab(tab) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('admin-section-' + tab).classList.add('active');
+            document.querySelectorAll('[id^="admin-tab-"]').forEach(t => {
+                t.className = 'w-full text-left px-4 py-3 rounded-xl hover:bg-amber-50 text-gray-700 transition';
+            });
+            document.getElementById('admin-tab-' + tab).className = 'w-full text-left px-4 py-3 rounded-xl admin-tab-active transition';
+
+            if (tab === 'dashboard') renderAdminDashboard();
+            if (tab === 'orders') renderAdminOrders('all');
+            if (tab === 'products') renderAdminProducts();
+        }
+
+        function renderAdminDashboard() {
+            const totalOrders = orders.length;
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today).length;
+            const revenue = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
+
+            document.getElementById('stat-total-orders').textContent = totalOrders;
+            document.getElementById('stat-today-orders').textContent = todayOrders;
+            document.getElementById('stat-total-revenue').textContent = revenue + ' ₺';
+
+            const recent = orders.slice(0, 5);
+            document.getElementById('admin-recent-orders').innerHTML = recent.length === 0
+                ? '<p class="text-gray-500 text-sm">Henüz sipariş yok</p>'
+                : recent.map(o => `
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                        <div><p class="font-semibold text-sm">#${o.id}</p><p class="text-xs text-gray-500">${o.items.length} ürün - ${o.total} ₺</p></div>
+                        <span class="text-xs px-2 py-1 rounded-full ${o.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : o.status === 'preparing' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}">${o.status === 'pending' ? 'Bekliyor' : o.status === 'preparing' ? 'Hazırlanıyor' : 'Hazır'}</span>
+                    </div>
+                `).join('');
+        }
+
+        function filterAdminOrders(filter) {
+            currentAdminFilter = filter;
+            renderAdminOrders(filter);
+        }
+
+        function renderAdminOrders(filter) {
+            let filtered = orders;
+            if (filter !== 'all') filtered = orders.filter(o => o.status === filter);
+
+            const container = document.getElementById('admin-orders-list');
+            if (filtered.length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Sipariş bulunmuyor</p>'; return; }
+
+            container.innerHTML = filtered.map(order => {
+                const statusOptions = { pending: 'Bekliyor', preparing: 'Hazırlanıyor', ready: 'Hazır', delivered: 'Teslim Edildi', cancelled: 'İptal' };
+                return `
+                    <div class="bg-white rounded-2xl p-5 shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span></div>
+                                <p class="text-xs text-gray-500">${order.date}</p>
+                            </div>
+                            <select onchange="updateOrderStatus('${order.id}', this.value)" class="border-2 border-gray-200 rounded-lg px-3 py-1 text-sm focus:border-amber-500 focus:outline-none">
+                                ${Object.entries(statusOptions).map(([val, text]) => `<option value="${val}" ${order.status === val ? 'selected' : ''}>${text}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<div class="flex justify-between text-sm"><span>${item.quantity}x ${item.name}</span><span class="text-gray-500">${item.price * item.quantity} ₺</span></div>`).join('')}</div>
+                        <div class="flex justify-between items-center border-t pt-3">
+                            <div class="text-sm text-gray-600">
+                                <p>👤 ${order.customer.name || '-'}</p>
+                                <p>📞 ${order.customer.phone || '-'}</p>
+                                <p>📍 ${order.customer.address || '-'}</p>
+                                ${order.note ? `<p class="text-amber-600 mt-1">📝 ${order.note}</p>` : ''}
+                            </div>
+                            <div class="text-right"><p class="text-2xl font-bold text-amber-600">${order.total} ₺</p><p class="text-xs text-gray-500">${order.payment === 'card' ? 'Kredi Kartı' : 'Nakit'}</p></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateOrderStatus(orderId, status) {
+            if (!isAdminLoggedIn()) {
+                alert('❌ Admin oturumu süresi dolmuş');
+                return;
+            }
+            
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = status;
+                // Firebase güncellemesi
+                if (db) {
+                    db.ref('orders/' + orderId + '/status').set(status);
+                }
+                saveOrdersToLocalStorage();
+                saveAdminLogToFirebase('Sipariş Durumu Güncelleme', 'Admin', 'Sipariş #' + orderId + ' durumu ' + status + ' olarak güncellendi');
+                alert('✅ Sipariş #' + orderId + ' durumu güncellendi: ' + status);
+                renderAdminOrders(currentAdminFilter);
+                renderAdminDashboard();
+            }
+        }
+
+        function renderAdminProducts() {
+            const container = document.getElementById('admin-products-list');
+            container.innerHTML = products.map(p => `
+                <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-4 items-center">
+                    <div class="w-16 h-16 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">${p.category === 'ready' ? '🧇' : p.category === 'cold' ? '🥤' : '☕'}</div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-gray-800 truncate">${p.name}</h4>
+                        <p class="text-xs text-gray-500">${p.category === 'ready' ? 'Hazır Waffle' : p.category === 'cold' ? 'Soğuk İçecek' : 'Sıcak İçecek'}</p>
+                        <p class="text-amber-600 font-bold text-lg">${p.price} ₺</p>
+                    </div>
+                    <button onclick="editProductPrice('${p.id}')" class="p-2 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 transition">✏️</button>
+                </div>
+            `).join('');
+        }
+
+        function editProductPrice(id) {
+            if (!isAdminLoggedIn()) {
+                alert('❌ Admin oturumu süresi dolmuş');
+                return;
+            }
+            
+            const p = products.find(x => x.id === id);
+            const newPrice = prompt(p.name + " için yeni fiyat girin (₺):", p.price);
+            if (newPrice && !isNaN(newPrice)) {
+                const oldPrice = p.price;
+                p.price = parseInt(newPrice);
+                if (db) {
+                    db.ref('products/' + id + '/price').set(p.price);
+                }
+                saveAdminLogToFirebase('Ürün Fiyatı Güncelleme', 'Admin', p.name + ' fiyatı ' + oldPrice + '₺ den ' + p.price + '₺ ye değiştirildi');
+                renderProducts();
+                renderAdminProducts();
+                alert('✅ ' + p.name + " fiyatı güncellendi: " + p.price + " ₺");
+            }
+        }
+
+        function saveSettings() {
+            const newPassword = document.getElementById('setting-password').value;
+            if (newPassword && newPassword.length >= 6) {
+                adminPassword = newPassword;
+                const newHash = hashPassword(newPassword);
+                localStorage.setItem('ykwaffle_admin_pass_hash', newHash);
+                saveAdminLogToFirebase('Ayarlar Güncelleme', 'Admin', 'Admin şifresi değiştirildi');
+                alert("✅ Yeni şifre kaydedildi! Sonraki girişte kullanabilirsiniz.");
+                document.getElementById('setting-password').value = '';
+            } else {
+                alert("❌ Şifre en az 6 karakter olmalı!");
+            }
+        }
+
+        // ========== SAYFA YÖNETİMİ ==========
+        function showPage(pageName) {
+            if (pageName === 'admin') {
+                // Admin sayfasına girmek için token doğrula
+                if (!isAdminLoggedIn()) {
+                    alert('❌ Admin oturumu süresi dolmuş. Lütfen tekrar giriş yapınız.');
+                    showPage('home');
+                    return;
+                }
+            }
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageName).classList.add('active');
+
+            if (pageName === 'cart') renderCart();
+            if (pageName === 'checkout') updateCheckoutTotal();
+            if (pageName === 'orders') renderOrders();
+            if (pageName === 'admin') {
+                switchAdminTab('dashboard');
+            }
+            window.scrollTo(0, 0);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.menu-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section-' + tabName).classList.add('active');
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-gray-500');
+            });
+            document.getElementById('tab-' + tabName).classList.add('tab-active');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-500');
+        }
+
+        // ========== KENDİ WAFFLE'IM ==========
+        function updateCustom() {
+            document.querySelectorAll('.option-box').forEach(box => {
+                const input = box.querySelector('input');
+                if (input.checked) box.classList.add('selected');
+                else box.classList.remove('selected');
+            });
+
+            const baseRadio = document.querySelector('input[name="base"]:checked');
+            let total = 0;
+            let summary = [];
+            let extraFee = 0;
+
+            if (!baseRadio) {
+                document.getElementById('custom-summary').textContent = "Henüz bir seçim yapmadınız...";
+                document.getElementById('custom-extra').classList.add('hidden');
+                document.getElementById('custom-price').textContent = "0 ₺";
+                document.getElementById('btn-custom-add').disabled = true;
+                return;
+            }
+
+            const [baseName, basePrice] = baseRadio.value.split('|');
+            total += parseInt(basePrice);
+            summary.push("Taban: " + baseName);
+
+            const groups = {
+                chocolate: { limit: 2, label: "Çikolata" },
+                fruit: { limit: 3, label: "Meyve" },
+                sauce: { limit: 2, label: "Sos" },
+                topping: { limit: 3, label: "Süsleme" }
+            };
+
+            for (let [groupKey, config] of Object.entries(groups)) {
+                const checked = document.querySelectorAll(`input[data-group="${groupKey}"]:checked`);
+                const names = [];
+                checked.forEach(cb => {
+                    const [n, p] = cb.value.split('|');
+                    names.push(n);
+                    total += parseInt(p);
+                });
+                if (names.length > 0) summary.push(config.label + ": " + names.join(", "));
+                if (checked.length > config.limit) extraFee += (checked.length - config.limit) * 20;
+            }
+
+            total += extraFee;
+            document.getElementById('custom-summary').textContent = summary.join(" | ");
+            document.getElementById('custom-price').textContent = total + " ₺";
+            if (extraFee > 0) {
+                document.getElementById('custom-extra').textContent = "Limit aşımı ek ücreti: +" + extraFee + " ₺";
+                document.getElementById('custom-extra').classList.remove('hidden');
+            } else {
+                document.getElementById('custom-extra').classList.add('hidden');
+            }
+            document.getElementById('btn-custom-add').disabled = false;
+        }
+
+        function addCustomToCart() {
+            const baseRadio = document.querySelector('input[name="base"]:checked');
+            if (!baseRadio) return;
+            const [baseName, basePrice] = baseRadio.value.split('|');
+            let total = parseInt(basePrice);
+            let extraFee = 0;
+            const groups = { chocolate: { limit: 2 }, fruit: { limit: 3 }, sauce: { limit: 2 }, topping: { limit: 3 } };
+            for (let [groupKey, config] of Object.entries(groups)) {
+                const checked = document.querySelectorAll(`input[data-group="${groupKey}"]:checked`);
+                checked.forEach(cb => {
+                    const [n, p] = cb.value.split('|');
+                    total += parseInt(p);
+                });
+                if (checked.length > config.limit) extraFee += (checked.length - config.limit) * 20;
+            }
+            total += extraFee;
+            const itemName = "Kendi Waffle'ım - " + baseName;
+            const existing = cart.find(item => item.name === itemName);
+            if (existing) existing.quantity++;
+            else cart.push({ name: itemName, price: total, quantity: 1 });
+            updateCartUI();
+            alert(itemName + " sepete eklendi! Toplam: " + total + " ₺ 🛒");
+            document.querySelectorAll('#section-custom input').forEach(input => {
+                input.checked = false;
+                input.closest('.option-box').classList.remove('selected');
+            });
+            updateCustom();
+        }
+
+        // ========== LOGO LONG PRESS TESPİTİ ==========
+        let logoTimer = null;
+        let isLogoPressed = false;
+        const logoContainer = document.getElementById('logo-container');
+
+        logoContainer.addEventListener('mousedown', (e) => {
+            isLogoPressed = true;
+            logoTimer = setTimeout(() => {
+                if (isLogoPressed) {
+                    isLogoPressed = false;
+                    showPage('admin-login');
+                    console.log('✨ Admin paneli açılıyor...');
+                }
+            }, 5000); // 5 saniye
+        });
+
+        logoContainer.addEventListener('mouseup', () => {
+            isLogoPressed = false;
+            if (logoTimer) {
+                clearTimeout(logoTimer);
+                logoTimer = null;
+            }
+        });
+
+        logoContainer.addEventListener('mouseleave', () => {
+            isLogoPressed = false;
+            if (logoTimer) {
+                clearTimeout(logoTimer);
+                logoTimer = null;
+            }
+        });
+
+        // Touch cihazlar için destek
+        logoContainer.addEventListener('touchstart', (e) => {
+            isLogoPressed = true;
+            logoTimer = setTimeout(() => {
+                if (isLogoPressed) {
+                    isLogoPressed = false;
+                    showPage('admin-login');
+                    console.log('✨ Admin paneli açılıyor...');
+                }
+            }, 5000); // 5 saniye
+        });
+
+        logoContainer.addEventListener('touchend', () => {
+            isLogoPressed = false;
+            if (logoTimer) {
+                clearTimeout(logoTimer);
+                logoTimer = null;
+            }
+        });
+
+        // Başlat
+        init();
+    </script>
+
+</body>
+</html>
