@@ -306,9 +306,14 @@
                 <div id="admin-section-products" class="admin-section">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold text-gray-800">🍽️ Ürün Yönetimi</h2>
-                        <button onclick="alert('Yeni ürün ekleme bir sonraki adımda!')" class="bg-amber-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-amber-600 transition"><span class="mr-1">+</span> Yeni Ürün</button>
+                        <button onclick="showAddProductModal()" class="bg-pink-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-pink-600 transition"><span class="mr-1">+</span> Yeni Ürün</button>
                     </div>
-                    <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    <div class="mb-6 flex gap-2">
+                        <button onclick="filterProducts('ready')" class="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-semibold">🧇 Waffles</button>
+                        <button onclick="filterProducts('cold')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">🥤 Soğuk</button>
+                        <button onclick="filterProducts('hot')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">☕ Sıcak</button>
+                    </div>
+                    <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
                 <!-- Ayarlar -->
@@ -339,22 +344,34 @@
     <script>
         // ========== BİLDİRİM SESİ ==========
         function playNotificationSound() {
-            // Web Audio API ile basit bir bip sesi oluştur
+            // Web Audio API ile iki tonlu bildirim sesi oluştur
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
+                const now = audioContext.currentTime;
                 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
+                // Birinci ton
+                const osc1 = audioContext.createOscillator();
+                const gain1 = audioContext.createGain();
+                osc1.connect(gain1);
+                gain1.connect(audioContext.destination);
+                osc1.frequency.value = 800;
+                osc1.type = 'sine';
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc1.start(now);
+                osc1.stop(now + 0.4);
                 
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
+                // İkinci ton (0.3 saniye sonra)
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioContext.destination);
+                osc2.frequency.value = 1000;
+                osc2.type = 'sine';
+                gain2.gain.setValueAtTime(0.3, now + 0.3);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+                osc2.start(now + 0.3);
+                osc2.stop(now + 0.7);
             } catch (err) {
                 console.log('Ses oynatılamadı:', err);
             }
@@ -370,6 +387,7 @@
             { id: 'r6', name: 'Bubble Servis', price: 550, category: 'ready', desc: 'Özel servis' },
             { id: 'r7', name: 'Bardakta Waffle', price: 250, category: 'ready', desc: 'Pratik waffle' },
             { id: 'r8', name: 'Double Waffle', price: 450, category: 'ready', desc: 'İki kat lezzet' },
+            { id: 'r9', name: 'Çiçek Waffle', price: 250, category: 'ready', desc: 'Özel çiçek taban' },
             { id: 'c1', name: 'Coca Cola', price: 70, category: 'cold', desc: '330ml' },
             { id: 'c2', name: 'Fanta', price: 70, category: 'cold', desc: '330ml' },
             { id: 'c3', name: 'Sprite', price: 70, category: 'cold', desc: '330ml' },
@@ -1053,7 +1071,7 @@
                                     ${Object.entries(statusOptions).map(([val, text]) => `<option value="${val}" ${order.status === val ? 'selected' : ''}>${text}</option>`).join('')}
                                 </select>
                             </div>
-                            <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<div class="flex justify-between text-sm"><span>${item.quantity}x ${item.name}</span><span class="text-gray-500">${item.price * item.quantity} ₺</span>${item.detailSummary ? `<br/><span class="text-xs text-amber-600">📝 ${item.detailSummary}</span>` : ''}</div>`).join('')}</div>
+                            <div class="space-y-2 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<div class="text-sm"><div class="flex justify-between"><span class="font-semibold text-gray-800">${item.quantity}x ${item.name}</span><span class="text-gray-600 font-semibold">${item.price * item.quantity} ₺</span></div>${item.detailSummary ? `<div class="text-xs text-pink-600 font-semibold mt-1 pl-2 border-l-2 border-pink-300">📝 ${item.detailSummary}</div>` : ''}</div>`).join('')}</div>
                             <div class="flex justify-between items-center border-t pt-3">
                                 <div class="text-sm text-gray-600">
                                     <p>👤 ${order.customer.name || '-'}</p>
@@ -1093,19 +1111,130 @@
             }
         }
 
+        let currentProductFilter = 'all';
+
+        function filterProducts(category) {
+            currentProductFilter = category;
+            const buttons = document.querySelectorAll('#admin-section-products button[onclick*="filterProducts"]');
+            buttons.forEach(btn => btn.classList.remove('!bg-pink-500', '!text-white'));
+            event.target.classList.add('!bg-pink-500', '!text-white');
+            renderAdminProducts();
+        }
+
         function renderAdminProducts() {
             const container = document.getElementById('admin-products-list');
-            container.innerHTML = products.map(p => `
-                <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-4 items-center">
-                    <div class="w-16 h-16 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">${p.category === 'ready' ? '🧇' : p.category === 'cold' ? '🥤' : '☕'}</div>
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-gray-800 truncate">${p.name}</h4>
-                        <p class="text-xs text-gray-500">${p.category === 'ready' ? 'Hazır Waffle' : p.category === 'cold' ? 'Soğuk İçecek' : 'Sıcak İçecek'}</p>
-                        <p class="text-amber-600 font-bold text-lg">${p.price} ₺</p>
+            let filtered = currentProductFilter === 'all' ? products : products.filter(p => p.category === currentProductFilter);
+            
+            container.innerHTML = filtered.map(p => `
+                <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-pink-300">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 text-lg">${p.name}</h4>
+                            <p class="text-xs text-gray-500">${p.category === 'ready' ? '🧇 Hazır Waffle' : p.category === 'cold' ? '🥤 Soğuk İçecek' : '☕ Sıcak İçecek'}</p>
+                            <p class="text-pink-600 font-bold text-2xl mt-2">${p.price} ₺</p>
+                        </div>
+                        <span class="text-3xl">${p.category === 'ready' ? '🧇' : p.category === 'cold' ? '🥤' : '☕'}</span>
                     </div>
-                    <button onclick="editProductPrice('${p.id}')" class="p-2 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 transition">✏️</button>
+                    <div class="flex gap-2 justify-end border-t pt-3">
+                        <button onclick="editProduct('${p.id}')" class="px-3 py-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 text-sm font-semibold">✏️ Düzenle</button>
+                        <button onclick="deleteProduct('${p.id}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm font-semibold">🗑️ Sil</button>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        function showAddProductModal() {
+            if (!isAdminLoggedIn()) {
+                alert('❌ Admin oturumu süresi dolmuş');
+                return;
+            }
+            
+            const name = prompt('Ürün adı:');
+            if (!name) return;
+            
+            const priceStr = prompt('Fiyat (₺):');
+            if (!priceStr || isNaN(priceStr)) return;
+            
+            const categoryStr = prompt('Kategori (ready=Hazır, cold=Soğuk, hot=Sıcak):', 'ready');
+            const category = ['ready', 'cold', 'hot'].includes(categoryStr) ? categoryStr : 'ready';
+            
+            const id = 'p' + Date.now();
+            products.push({
+                id: id,
+                name: name,
+                price: parseInt(priceStr),
+                category: category,
+                desc: ''
+            });
+            
+            if (db) {
+                db.ref('products/' + id).set({
+                    name: name,
+                    price: parseInt(priceStr),
+                    category: category
+                });
+            }
+            
+            saveAdminLogToFirebase('Yeni Ürün Ekleme', 'Admin', name + ' ürünü eklendi (' + parseInt(priceStr) + '₺)');
+            alert('✅ ' + name + ' ürünü başarıyla eklendi!');
+            renderProducts();
+            renderAdminProducts();
+        }
+
+        function editProduct(id) {
+            if (!isAdminLoggedIn()) {
+                alert('❌ Admin oturumu süresi dolmuş');
+                return;
+            }
+            
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            
+            const newName = prompt('Ürün adı:', p.name);
+            if (!newName) return;
+            
+            const newPrice = prompt('Fiyat (₺):', p.price);
+            if (!newPrice || isNaN(newPrice)) return;
+            
+            const oldName = p.name;
+            const oldPrice = p.price;
+            p.name = newName;
+            p.price = parseInt(newPrice);
+            
+            if (db) {
+                db.ref('products/' + id).update({
+                    name: newName,
+                    price: parseInt(newPrice)
+                });
+            }
+            
+            saveAdminLogToFirebase('Ürün Güncelleme', 'Admin', oldName + ' → ' + newName + ' (' + oldPrice + '₺ → ' + p.price + '₺)');
+            alert('✅ Ürün başarıyla güncellendi!');
+            renderProducts();
+            renderAdminProducts();
+        }
+
+        function deleteProduct(id) {
+            if (!isAdminLoggedIn()) {
+                alert('❌ Admin oturumu süresi dolmuş');
+                return;
+            }
+            
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            
+            if (!confirm('Emin misiniz? ' + p.name + ' silinecek!')) return;
+            
+            products = products.filter(x => x.id !== id);
+            
+            if (db) {
+                db.ref('products/' + id).remove();
+            }
+            
+            saveAdminLogToFirebase('Ürün Silme', 'Admin', p.name + ' ürünü silindi');
+            alert('✅ Ürün silindi!');
+            renderProducts();
+            renderAdminProducts();
         }
 
         function editProductPrice(id) {
@@ -1183,7 +1312,7 @@
             const validPages = ['home', 'cart', 'checkout', 'success', 'orders', 'admin-login', 'admin'];
             if (validPages.includes(hash)) {
                 if (hash === 'admin' && !isAdminLoggedIn()) {
-                    showPage('home');
+                    showPage('admin-login');
                 } else {
                     showPage(hash);
                 }
