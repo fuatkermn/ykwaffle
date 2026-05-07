@@ -520,7 +520,7 @@
                                 console.log('✅ Admin şifresi Firebase\'den yüklendi');
                             } else {
                                 console.log('⚠️ Firebase\'de şifre kaydı yok, varsayılan kullanılacak');
-                                // İlk kez ise varsayılan şifreyi kaydet
+                                // İlk kez ise varsayılan şifreyi Firebase'e kaydet
                                 const defaultHash = hashPassword('admin123');
                                 db.ref('settings/admin_password_hash').set(defaultHash);
                                 localStorage.setItem('ykwaffle_admin_pass_hash', defaultHash);
@@ -979,30 +979,18 @@
             
             console.log('🔐 Admin login deneniyor...');
             
-            // Önce localStorage'dan kontrol et (hızlı)
-            const localHash = localStorage.getItem('ykwaffle_admin_pass_hash');
-            console.log('📍 Local hash:', localHash ? 'VAR' : 'YOK');
-            console.log('📍 Girilen şifre hash:', passHash);
-            
-            // Firebase'den de kontrol et
+            // Firebase'den şifre kontrol et
             if (db) {
                 db.ref('settings/admin_password_hash').once('value', (snapshot) => {
                     const firebaseHash = snapshot.val();
-                    console.log('📍 Firebase hash:', firebaseHash ? 'VAR' : 'YOK');
+                    const storedHash = firebaseHash || hashPassword('admin123');
                     
-                    // Hangisinin olduğunu bulma
-                    const validHash = firebaseHash || localHash || hashPassword('admin123');
-                    console.log('✅ Geçerli hash:', validHash ? 'BULUNDU' : 'KULLANILAMADI');
+                    console.log('📍 Firebase\'de şifre:', firebaseHash ? 'VAR' : 'YOK');
+                    console.log('📍 Girilen şifre hash:', passHash);
                     
-                    // İlk kez ise Firebase'e kaydet
-                    if (!firebaseHash && (localHash || passHash === hashPassword('admin123'))) {
-                        db.ref('settings/admin_password_hash').set(validHash);
-                        console.log('💾 Şifre Firebase\'e kaydedildi');
-                    }
-                    
-                    if (passHash === validHash) {
+                    if (passHash === storedHash) {
                         console.log('✅ Şifre DOĞRU - Giriş yapılıyor');
-                        performLogin(validHash);
+                        performLogin(storedHash);
                     } else {
                         console.log('❌ Şifre YANLIŞI');
                         errorEl.classList.remove('hidden');
@@ -1010,23 +998,21 @@
                     }
                 }).catch(err => {
                     console.error('Firebase okuma hatası:', err);
-                    // Firebase hatasında localhost kontrolü
-                    const fallbackHash = localHash || hashPassword('admin123');
-                    if (passHash === fallbackHash) {
-                        console.log('✅ Fallback ile giriş yapılıyor');
-                        performLogin(fallbackHash);
+                    // Firebase hatasında localStorage'a fallback
+                    const localHash = localStorage.getItem('ykwaffle_admin_pass_hash') || hashPassword('admin123');
+                    if (passHash === localHash) {
+                        console.log('✅ LocalStorage fallback ile giriş yapılıyor');
+                        performLogin(localHash);
                     } else {
                         errorEl.classList.remove('hidden');
-                        errorEl.textContent = '❌ Şifre hatalı veya bağlantı sorunu var!';
+                        errorEl.textContent = '❌ Şifre hatalı!';
                     }
                 });
             } else {
-                console.warn('⚠️ Firebase bağlı değil, localStorage kontrol ediliyor');
                 // Firebase bağlı değilse localStorage'a güven
-                const fallbackHash = localHash || hashPassword('admin123');
-                if (passHash === fallbackHash) {
-                    console.log('✅ LocalStorage ile giriş yapılıyor');
-                    performLogin(fallbackHash);
+                const localHash = localStorage.getItem('ykwaffle_admin_pass_hash') || hashPassword('admin123');
+                if (passHash === localHash) {
+                    performLogin(localHash);
                 } else {
                     errorEl.classList.remove('hidden');
                     errorEl.textContent = '❌ Şifre hatalı!';
@@ -1039,9 +1025,11 @@
             document.getElementById('admin-password').value = '';
             errorEl.classList.add('hidden');
             
-            // Firebase'e kaydet
+            // Firebase'e merkezi olarak kaydet (tüm cihazlar için)
             if (db) {
-                db.ref('settings/admin_password_hash').set(validHash);
+                db.ref('settings/admin_password_hash').set(validHash).catch(err => {
+                    console.warn('Firebase kayıt hatası:', err);
+                });
             }
             localStorage.setItem('ykwaffle_admin_pass_hash', validHash);
             
@@ -1337,15 +1325,17 @@
                 const newHash = hashPassword(newPassword);
                 localStorage.setItem('ykwaffle_admin_pass_hash', newHash);
                 
-                // Firebase'e merkezi olarak kaydet (tüm cihazlar için)
+                // Firebase'e merkezi olarak kaydet (tüm tarayıcılar için)
                 if (db) {
                     db.ref('settings/admin_password_hash').set(newHash).then(() => {
-                        console.log('✅ Şifre Firebase\'e kaydedildi');
+                        console.log('✅ Şifre Firebase\'e kaydedildi - Tüm tarayıcılarda geçerli olacak');
+                    }).catch(err => {
+                        console.warn('Firebase kayıt hatası:', err);
                     });
                 }
                 
                 saveAdminLogToFirebase('Ayarlar Güncelleme', 'Admin', 'Admin şifresi değiştirildi');
-                alert("✅ Yeni şifre kaydedildi! Sonraki girişte kullanabilirsiniz.\n💡 Tüm cihazlarda geçerli olacaktır.");
+                alert("✅ Yeni şifre kaydedildi! Sonraki girişte kullanabilirsiniz.\n💡 Tüm tarayıcılarda geçerli olacaktır.");
                 document.getElementById('setting-password').value = '';
             } else {
                 alert("❌ Şifre en az 6 karakter olmalı!");
