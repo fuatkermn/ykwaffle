@@ -240,7 +240,7 @@
             <input type="password" id="admin-password" placeholder="Şifrenizi girin" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-4 focus:border-pink-500 focus:outline-none transition">
             <button onclick="adminLogin()" class="w-full bg-pink-500 text-white py-3 rounded-xl font-bold hover:bg-pink-600 transition">Giriş Yap</button>
             <p id="admin-error" class="text-red-500 text-sm mt-3 text-center hidden">Hatalı şifre!</p>
-            <p class="text-xs text-gray-400 text-center mt-4">🔐 Varsayılan şifre: admin123 | JWT Token: 24 saat</p>
+            <p class="text-xs text-gray-400 text-center mt-4">🔐 Admin şifresi Firebase ayarlarından yönetilir | Admin oturumu: 24 saat</p>
         </div>
     </div>
 
@@ -291,7 +291,10 @@
 
                 <!-- Siparişler -->
                 <div id="admin-section-orders" class="admin-section">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Sipariş Yönetimi</h2>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">📋 Sipariş Yönetimi</h2>
+                        <span id="admin-current-day" class="text-sm font-semibold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">Bugün</span>
+                    </div>
                     <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
                         <button onclick="filterAdminOrders('all')" class="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-semibold whitespace-nowrap">Tümü</button>
                         <button onclick="filterAdminOrders('pending')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold whitespace-nowrap">Bekliyor</button>
@@ -309,9 +312,9 @@
                         <button onclick="showAddProductModal()" class="bg-pink-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-pink-600 transition"><span class="mr-1">+</span> Yeni Ürün</button>
                     </div>
                     <div class="mb-6 flex gap-2">
-                        <button onclick="filterProducts('ready')" class="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-semibold">🧇 Waffles</button>
-                        <button onclick="filterProducts('cold')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">🥤 Soğuk</button>
-                        <button onclick="filterProducts('hot')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">☕ Sıcak</button>
+                        <button onclick="filterProducts('ready', this)" class="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-semibold">🧇 Waffles</button>
+                        <button onclick="filterProducts('cold', this)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">🥤 Soğuk</button>
+                        <button onclick="filterProducts('hot', this)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">☕ Sıcak</button>
                     </div>
                     <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
@@ -323,7 +326,7 @@
                         <div><label class="block text-sm font-semibold text-gray-700 mb-2">İşletme Adı</label><input type="text" id="setting-name" value="YK WAFFLE" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
                         <div><label class="block text-sm font-semibold text-gray-700 mb-2">Telefon</label><input type="text" id="setting-phone" value="0534 721 29 42" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
                         <div><label class="block text-sm font-semibold text-gray-700 mb-2">Adres</label><textarea id="setting-address" rows="2" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition">Yeşilbayır Mahallesi / Sağduyu Cad/ 41-G / Mamak- Ankara</textarea></div>
-                        <div><label class="block text-sm font-semibold text-gray-700 mb-2">Admin Şifresi (JWT Protected)</label><input type="password" id="setting-password" placeholder="Yeni şifre girmek için... (min 6 karakter)" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"><p class="text-xs text-gray-500 mt-1">💡 Şifre hash'lenerek kaydedilir. HTML kaynağında görünmez.</p></div>
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-2">Admin Şifresi</label><input type="password" id="setting-password" placeholder="Yeni şifre girmek için... (min 6 karakter)" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"><p class="text-xs text-gray-500 mt-1">💡 Şifre hash'lenerek kaydedilir. HTML kaynağında görünmez.</p></div>
                         <button onclick="saveSettings()" class="bg-amber-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-amber-600 transition">💾 Kaydet</button>
                     </div>
                 </div>
@@ -409,14 +412,11 @@
         let orders = [];
         let orderType = 'table';
         let paymentMethod = 'card';
-        let adminPassword = 'admin123'; // Varsayılan şifre
         let currentAdminFilter = 'all';
         let db = null;
-        let adminLogs = [];
-        let adminToken = null;
-        let tokenExpiration = null;
-        const JWT_SECRET = 'ykwaffle_secret_key_2024'; // Gizli anahtar
-        const TOKEN_EXPIRY_HOURS = 24; // Token 24 saat geçerli
+        let adminSessionExpiry = null;
+        const PASSWORD_SALT = 'ykwaffle_password_salt_2024';
+        const ADMIN_SESSION_HOURS = 24; // Oturum 24 saat geçerli
         const firebaseConfig = {
             apiKey: "AIzaSyDkHM4paNBdhC34hX7EiCtZiX3d3x1BI80",
             authDomain: "ykwaffle-6d9e8.firebaseapp.com",
@@ -428,78 +428,36 @@
             measurementId: "G-0RGHDRQBYG"
         };
 
-        // ========== JWT & HASH FONKSIYONLARI ==========
+        // ========== HASH & OTURUM FONKSIYONLARI ==========
         function hashPassword(password) {
-            // SHA256 hash'i kullan
-            return CryptoJS.SHA256(password + JWT_SECRET).toString();
+            return CryptoJS.SHA256(password + PASSWORD_SALT).toString();
         }
 
-        function generateJWT(adminName) {
-            const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-            const now = new Date().getTime();
-            const expiry = now + (TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
-            
-            const payload = btoa(JSON.stringify({
-                admin: adminName,
-                iat: now,
-                exp: expiry,
-                role: 'admin'
-            }));
-
-            const signature = btoa(CryptoJS.HmacSHA256(header + '.' + payload, JWT_SECRET).toString());
-            const token = header + '.' + payload + '.' + signature;
-            
-            return { token, expiry };
+        function getAdminSessionExpiry() {
+            return parseInt(localStorage.getItem('ykwaffle_admin_session_expiry') || '0', 10);
         }
 
-        function validateJWT(token) {
-            try {
-                const parts = token.split('.');
-                if (parts.length !== 3) return null;
-
-                const payload = JSON.parse(atob(parts[1]));
-                const now = new Date().getTime();
-
-                if (payload.exp < now) {
-                    console.warn('❌ Token süresi dolmuş');
-                    return null;
-                }
-
-                return payload;
-            } catch (err) {
-                console.error('Token doğrulama hatası:', err);
-                return null;
-            }
+        function setAdminSession() {
+            const expiry = Date.now() + (ADMIN_SESSION_HOURS * 60 * 60 * 1000);
+            localStorage.setItem('ykwaffle_admin_session_expiry', String(expiry));
+            adminSessionExpiry = expiry;
+            return expiry;
         }
 
-        function getAdminToken() {
-            return localStorage.getItem('ykwaffle_admin_token');
-        }
-
-        function setAdminToken(token, expiry) {
-            localStorage.setItem('ykwaffle_admin_token', token);
-            localStorage.setItem('ykwaffle_token_expiry', expiry);
-            adminToken = token;
-            tokenExpiration = expiry;
-        }
-
-        function clearAdminToken() {
-            localStorage.removeItem('ykwaffle_admin_token');
-            localStorage.removeItem('ykwaffle_token_expiry');
-            adminToken = null;
-            tokenExpiration = null;
+        function clearAdminSession() {
+            localStorage.removeItem('ykwaffle_admin_session_expiry');
+            adminSessionExpiry = null;
         }
 
         function isAdminLoggedIn() {
-            const token = getAdminToken();
-            if (!token) return false;
-            
-            const payload = validateJWT(token);
-            if (!payload) {
-                clearAdminToken();
+            const expiry = getAdminSessionExpiry();
+            if (!expiry) return false;
+
+            if (Date.now() > expiry) {
+                clearAdminSession();
                 return false;
             }
-            
+
             return true;
         }
 
@@ -511,36 +469,18 @@
                 // Firebase bağlantısı test et
                 db.ref('.info/connected').on('value', (snapshot) => {
                     if (snapshot.val() === true) {
-                        console.log('✅ Firebase gerçek zamanlı bağlantısı başarılı');
-                        
-                        // Firebase'den merkezi şifre hash'ini yükle
-                        db.ref('settings/admin_password_hash').once('value', (snapshot) => {
-                            if (snapshot.val()) {
-                                localStorage.setItem('ykwaffle_admin_pass_hash', snapshot.val());
-                                console.log('✅ Admin şifresi Firebase\'den yüklendi');
-                            } else {
-                                console.log('⚠️ Firebase\'de şifre kaydı yok, varsayılan kullanılacak');
-                                // İlk kez ise varsayılan şifreyi Firebase'e kaydet
-                                const defaultHash = hashPassword('admin123');
-                                db.ref('settings/admin_password_hash').set(defaultHash);
-                                localStorage.setItem('ykwaffle_admin_pass_hash', defaultHash);
-                            }
-                        }).catch(err => {
-                            console.warn('Firebase hash okuma hatası:', err);
-                        });
-                    } else {
-                        console.warn('⚠️ Firebase offline - localStorage kullanılıyor');
+                        console.log('✅ Bağlantı başarılı');
                     }
                 });
                 
                 loadOrdersFromFirebase();
                 loadOrdersFromLocalStorage();
                 
-                // Kaydedilmiş token varsa yükle
-                const savedToken = getAdminToken();
-                if (savedToken && validateJWT(savedToken)) {
-                    adminToken = savedToken;
-                    console.log('✅ Admin token yüklendi');
+                // Kaydedilmiş admin oturumu varsa yükle
+                const savedSessionExpiry = getAdminSessionExpiry();
+                if (savedSessionExpiry && Date.now() <= savedSessionExpiry) {
+                    adminSessionExpiry = savedSessionExpiry;
+                    console.log('✅ Admin oturumu yüklendi');
                 }
                 console.log('✅ Firebase bağlantısı başlatıldı');
             } catch (err) {
@@ -577,7 +517,9 @@
                     items: order.items.map(item => ({
                         name: sanitizeInput(item.name),
                         price: item.price,
-                        quantity: item.quantity
+                        quantity: item.quantity,
+                        customDetails: item.customDetails || null,
+                        detailSummary: sanitizeInput(item.detailSummary || '')
                     })),
                     customer: {
                         name: sanitizeInput(order.customer.name || ''),
@@ -653,6 +595,19 @@
                     console.error('localStorage yükleme hatası:', err);
                 }
             }
+        }
+
+        function toOrderDateKey(order) {
+            if (order.createdAt) {
+                return new Date(order.createdAt).toLocaleDateString('tr-TR');
+            }
+            return (order.date || '').split(',')[0] || '';
+        }
+
+        function parseDateKeyToTime(dateKey) {
+            const [day, month, year] = dateKey.split('.').map(Number);
+            if (!day || !month || !year) return 0;
+            return new Date(year, month - 1, day).getTime();
         }
 
         
@@ -828,6 +783,7 @@
                 payment: paymentMethod,
                 note: sanitizeInput(note),
                 status: 'pending',
+                createdAt: Date.now(),
                 date: new Date().toLocaleString('tr-TR')
             };
 
@@ -858,7 +814,7 @@
             // Siparişleri tarih grubuna göre grupla
             const groupedByDate = {};
             orders.forEach(order => {
-                const orderDate = order.date.split(',')[0];
+                const orderDate = toOrderDateKey(order);
                 if (!groupedByDate[orderDate]) {
                     groupedByDate[orderDate] = [];
                 }
@@ -867,9 +823,7 @@
 
             // Tarihleri ters sırada sırala
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
-                const dateA = new Date(a.split('.').reverse().join('-'));
-                const dateB = new Date(b.split('.').reverse().join('-'));
-                return dateB - dateA;
+                return parseDateKeyToTime(b) - parseDateKeyToTime(a);
             });
 
             sortedDates.forEach(date => {
@@ -907,7 +861,8 @@
 
         function filterOrdersByDate(date) {
             if (!date) return;
-            const filtered = orders.filter(o => o.date.split(',')[0] === date);
+            const trDate = date.split('-').reverse().join('.');
+            const filtered = orders.filter(o => toOrderDateKey(o) === trDate);
             const container = document.getElementById('orders-list');
             const empty = document.getElementById('orders-empty');
             
@@ -977,46 +932,27 @@
             const passHash = hashPassword(pass);
             const errorEl = document.getElementById('admin-error');
             
-            console.log('🔐 Admin login deneniyor...');
-            
-            // Firebase'den şifre kontrol et
+            // Firebase'den merkezi şifre kontrolü
             if (db) {
                 db.ref('settings/admin_password_hash').once('value', (snapshot) => {
-                    const firebaseHash = snapshot.val();
-                    const storedHash = firebaseHash || hashPassword('admin123');
-                    
-                    console.log('📍 Firebase\'de şifre:', firebaseHash ? 'VAR' : 'YOK');
-                    console.log('📍 Girilen şifre hash:', passHash);
+                    const storedHash = snapshot.val();
+                    if (!storedHash) {
+                        errorEl.classList.remove('hidden');
+                        errorEl.textContent = '❌ Firebase\'de admin şifresi tanımlı değil. Ayarlar kısmından şifre kaydedin.';
+                        return;
+                    }
                     
                     if (passHash === storedHash) {
-                        console.log('✅ Şifre DOĞRU - Giriş yapılıyor');
                         performLogin(storedHash);
                     } else {
-                        console.log('❌ Şifre YANLIŞI');
                         errorEl.classList.remove('hidden');
                         errorEl.textContent = '❌ Şifre hatalı! Lütfen tekrar deneyin.';
                     }
                 }).catch(err => {
-                    console.error('Firebase okuma hatası:', err);
-                    // Firebase hatasında localStorage'a fallback
-                    const localHash = localStorage.getItem('ykwaffle_admin_pass_hash') || hashPassword('admin123');
-                    if (passHash === localHash) {
-                        console.log('✅ LocalStorage fallback ile giriş yapılıyor');
-                        performLogin(localHash);
-                    } else {
-                        errorEl.classList.remove('hidden');
-                        errorEl.textContent = '❌ Şifre hatalı!';
-                    }
+                    alert('Bağlantı hatası: ' + err.message);
                 });
             } else {
-                // Firebase bağlı değilse localStorage'a güven
-                const localHash = localStorage.getItem('ykwaffle_admin_pass_hash') || hashPassword('admin123');
-                if (passHash === localHash) {
-                    performLogin(localHash);
-                } else {
-                    errorEl.classList.remove('hidden');
-                    errorEl.textContent = '❌ Şifre hatalı!';
-                }
+                alert('Sistem şu anda hazır değil, lütfen internet bağlantınızı kontrol edin.');
             }
         }
 
@@ -1033,9 +969,8 @@
             }
             localStorage.setItem('ykwaffle_admin_pass_hash', validHash);
             
-            // JWT token oluştur
-            const { token, expiry } = generateJWT('Admin');
-            setAdminToken(token, expiry);
+            // Admin oturumunu başlat
+            setAdminSession();
             
             saveAdminLogToFirebase('Admin Girişi', 'Admin', 'Başarılı giriş - ' + new Date().toLocaleTimeString('tr-TR'));
             alert('✅ Hoş geldiniz! Oturum süresi: 24 saat');
@@ -1045,7 +980,7 @@
         }
 
         function adminLogout() {
-            clearAdminToken();
+            clearAdminSession();
             saveAdminLogToFirebase('Admin Çıkışı', 'Admin', 'Oturum kapatıldı - ' + new Date().toLocaleTimeString('tr-TR'));
             alert('✅ Oturum kapatıldı');
             window.location.hash = 'home';
@@ -1061,14 +996,14 @@
             document.getElementById('admin-tab-' + tab).className = 'w-full text-left px-4 py-3 rounded-xl admin-tab-active transition';
 
             if (tab === 'dashboard') renderAdminDashboard();
-            if (tab === 'orders') renderAdminOrders('all');
+            if (tab === 'orders') renderAdminOrders('today');
             if (tab === 'products') renderAdminProducts();
         }
 
         function renderAdminDashboard() {
             const totalOrders = orders.length;
-            const today = new Date().toDateString();
-            const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today).length;
+            const todayKey = new Date().toLocaleDateString('tr-TR');
+            const todayOrders = orders.filter(o => toOrderDateKey(o) === todayKey).length;
             const revenue = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
 
             document.getElementById('stat-total-orders').textContent = totalOrders;
@@ -1092,16 +1027,24 @@
         }
 
         function renderAdminOrders(filter) {
+            const todayKey = new Date().toLocaleDateString('tr-TR');
+            const currentDayEl = document.getElementById('admin-current-day');
+            if (currentDayEl) currentDayEl.textContent = `Gün: ${todayKey}`;
+
             let filtered = orders;
-            if (filter !== 'all') filtered = orders.filter(o => o.status === filter);
+            if (filter === 'today') {
+                filtered = orders.filter(o => toOrderDateKey(o) === todayKey);
+            } else if (filter !== 'all') {
+                filtered = orders.filter(o => o.status === filter);
+            }
 
             const container = document.getElementById('admin-orders-list');
-            if (filtered.length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Sipariş bulunmuyor</p>'; return; }
+            if (filtered.length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Bugün için sipariş bulunmuyor</p>'; return; }
 
             // Siparişleri tarih grubuna göre grupla
             const groupedByDate = {};
             filtered.forEach(order => {
-                const orderDate = order.date.split(',')[0]; // Tarihi al (HH:MM,SS öncesi)
+                const orderDate = toOrderDateKey(order);
                 if (!groupedByDate[orderDate]) {
                     groupedByDate[orderDate] = [];
                 }
@@ -1109,11 +1052,7 @@
             });
 
             // Tarihleri ters sırada (yeni önce) sırala
-            const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
-                const dateA = new Date(a.split('.').reverse().join('-'));
-                const dateB = new Date(b.split('.').reverse().join('-'));
-                return dateB - dateA;
-            });
+            const sortedDates = Object.keys(groupedByDate).sort((a, b) => parseDateKeyToTime(b) - parseDateKeyToTime(a));
 
             let html = '';
             sortedDates.forEach(date => {
@@ -1131,7 +1070,7 @@
                                     ${Object.entries(statusOptions).map(([val, text]) => `<option value="${val}" ${order.status === val ? 'selected' : ''}>${text}</option>`).join('')}
                                 </select>
                             </div>
-                            <div class="space-y-2 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<div class="text-sm"><div class="flex justify-between"><span class="font-semibold text-gray-800">${item.quantity}x ${item.name}</span><span class="text-gray-600 font-semibold">${item.price * item.quantity} ₺</span></div>${item.detailSummary ? `<div class="text-xs text-pink-600 font-semibold mt-1 pl-2 border-l-2 border-pink-300">📝 ${item.detailSummary}</div>` : ''}</div>`).join('')}</div>
+                            <div class="space-y-2 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<div class="text-sm"><div class="flex justify-between"><span class="font-semibold text-gray-800">${item.quantity}x ${item.name}</span><span class="text-gray-600 font-semibold">${item.price * item.quantity} ₺</span></div>${item.customDetails ? `<div class="text-xs text-purple-700 bg-purple-50 mt-1 p-2 rounded-lg border border-purple-200">🧇 <b>Kendi Waffle Seçimleri:</b><br>${Object.entries(item.customDetails).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join('<br>')}</div>` : ''}${item.detailSummary ? `<div class="text-xs text-pink-600 font-semibold mt-1 pl-2 border-l-2 border-pink-300">📝 ${item.detailSummary}</div>` : ''}</div>`).join('')}</div>
                             <div class="flex justify-between items-center border-t pt-3">
                                 <div class="text-sm text-gray-600">
                                     <p>👤 ${order.customer.name || '-'}</p>
@@ -1173,11 +1112,13 @@
 
         let currentProductFilter = 'all';
 
-        function filterProducts(category) {
+        function filterProducts(category, clickedButton = null) {
             currentProductFilter = category;
             const buttons = document.querySelectorAll('#admin-section-products button[onclick*="filterProducts"]');
             buttons.forEach(btn => btn.classList.remove('!bg-pink-500', '!text-white'));
-            event.target.classList.add('!bg-pink-500', '!text-white');
+            if (clickedButton) {
+                clickedButton.classList.add('!bg-pink-500', '!text-white');
+            }
             renderAdminProducts();
         }
 
@@ -1321,22 +1262,18 @@
         function saveSettings() {
             const newPassword = document.getElementById('setting-password').value;
             if (newPassword && newPassword.length >= 6) {
-                adminPassword = newPassword;
                 const newHash = hashPassword(newPassword);
-                localStorage.setItem('ykwaffle_admin_pass_hash', newHash);
                 
-                // Firebase'e merkezi olarak kaydet (tüm tarayıcılar için)
+                // Firebase'e merkezi olarak kaydet (tüm cihazlar için)
                 if (db) {
                     db.ref('settings/admin_password_hash').set(newHash).then(() => {
-                        console.log('✅ Şifre Firebase\'e kaydedildi - Tüm tarayıcılarda geçerli olacak');
+                        saveAdminLogToFirebase('Ayarlar Güncelleme', 'Admin', 'Admin şifresi değiştirildi');
+                        alert("✅ Yeni şifre başarıyla güncellendi!\n💡 Artık tüm cihazlardan bu şifre ile giriş yapabilirsiniz.");
+                        document.getElementById('setting-password').value = '';
                     }).catch(err => {
-                        console.warn('Firebase kayıt hatası:', err);
+                        alert("❌ Şifre güncellenirken hata oluştu: " + err.message);
                     });
                 }
-                
-                saveAdminLogToFirebase('Ayarlar Güncelleme', 'Admin', 'Admin şifresi değiştirildi');
-                alert("✅ Yeni şifre kaydedildi! Sonraki girişte kullanabilirsiniz.\n💡 Tüm tarayıcılarda geçerli olacaktır.");
-                document.getElementById('setting-password').value = '';
             } else {
                 alert("❌ Şifre en az 6 karakter olmalı!");
             }
