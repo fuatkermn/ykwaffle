@@ -13,34 +13,34 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
         body { font-family: 'Poppins', sans-serif; }
-        .tab-active { border-bottom: 3px solid #f59e0b; color: #f59e0b; font-weight: 700; }
+        .tab-active { border-bottom: 3px solid #ec4899; color: #ec4899; font-weight: 700; }
         .menu-section { display: none; }
         .menu-section.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .option-box { border: 2px solid #e5e7eb; border-radius: 0.75rem; padding: 0.75rem; text-align: center; cursor: pointer; transition: all 0.2s; background: white; }
-        .option-box:hover { border-color: #fbbf24; }
-        .option-box.selected { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+        .option-box:hover { border-color: #f472b6; }
+        .option-box.selected { border-color: #ec4899; background: #fce7f3; color: #831843; }
         .option-box input { display: none; }
         .page { display: none; }
         .page.active { display: block; animation: slideIn 0.3s; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-        .order-type-active { border-color: #f59e0b !important; background: #fffbeb !important; }
-        .payment-active { border-color: #f59e0b !important; background: #fffbeb !important; }
-        .admin-tab-active { background: #fef3c7; color: #92400e; font-weight: 700; }
+        .order-type-active { border-color: #ec4899 !important; background: #fce7f3 !important; }
+        .payment-active { border-color: #ec4899 !important; background: #fce7f3 !important; }
+        .admin-tab-active { background: #fbcfe8; color: #831843; font-weight: 700; }
         .admin-section { display: none; }
         .admin-section.active { display: block; }
     </style>
 </head>
-<body class="bg-amber-50 pb-20">
+<body class="bg-gradient-to-b from-pink-50 to-white pb-20">
 
     <!-- ÜST MENÜ -->
     <nav class="bg-white shadow-md p-4 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div id="logo-container" class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
-                <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold select-none">YK</div>
-                <h1 class="text-xl font-bold text-amber-800">YK WAFFLE</h1>
+                <div class="w-10 h-10 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold select-none">YK</div>
+                <h1 class="text-xl font-bold text-pink-800">YK WAFFLE</h1>
             </div>
-            <div class="text-amber-700 font-semibold flex items-center gap-2 cursor-pointer" onclick="showPage('cart')">
+            <div class="text-pink-700 font-semibold flex items-center gap-2 cursor-pointer" onclick="showPage('cart')">
                 🛒 Sepet (<span id="cart-count">0</span>)
             </div>
         </div>
@@ -48,13 +48,13 @@
 
     <!-- ===== ANA SAYFA ===== -->
     <div id="page-home" class="page active max-w-6xl mx-auto p-6">
-        <div class="bg-gradient-to-r from-amber-400 to-orange-500 rounded-3xl p-8 text-white text-center mb-8 shadow-xl">
+        <div class="bg-gradient-to-r from-pink-400 to-rose-500 rounded-3xl p-8 text-white text-center mb-8 shadow-xl">
             <h2 class="text-3xl font-bold mb-2">YK WAFFLE'e Hoş Geldiniz! 🧇</h2>
             <p class="mb-2 opacity-90">Mamak / Ankara'nın en lezzetli waffle'ı</p>
             <p class="text-sm opacity-80">📍 Yeşilbayır Mah. Sağduyu Cad. 41-G Mamak/Ankara | 📞 0534 721 29 42</p>
         </div>
 
-        <div class="flex gap-6 border-b border-amber-200 mb-6 overflow-x-auto pb-1">
+        <div class="flex gap-6 border-b border-pink-200 mb-6 overflow-x-auto pb-1">
             <button onclick="switchTab('ready')" id="tab-ready" class="tab-active pb-3 px-2 whitespace-nowrap">🧇 Hazır Waffle</button>
             <button onclick="switchTab('custom')" id="tab-custom" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">✨ Kendi Waffle'ım</button>
             <button onclick="switchTab('cold')" id="tab-cold" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">🥤 Soğuk İçecekler</button>
@@ -160,7 +160,7 @@
 
     <!-- ===== SEPET ===== -->
     <div id="page-cart" class="page max-w-6xl mx-auto p-6">
-        <h2 class="text-2xl font-bold text-amber-800 mb-6">🛒 Sepetim</h2>
+        <h2 class="text-2xl font-bold text-pink-800 mb-6">🛒 Sepetim</h2>
         <div id="cart-empty" class="text-center py-12">
             <div class="text-6xl mb-4">🛒</div>
             <p class="text-gray-500 text-lg">Sepetiniz boş</p>
@@ -172,14 +172,14 @@
                 <div class="flex justify-between text-gray-600"><span>Ara Toplam</span><span id="cart-subtotal" class="font-semibold">0 ₺</span></div>
                 <div class="flex justify-between text-gray-500 text-sm"><span>Teslimat</span><span>Ücretsiz</span></div>
             </div>
-            <div class="flex justify-between text-xl font-bold text-amber-800 mb-6"><span>Toplam</span><span id="cart-total">0 ₺</span></div>
+            <div class="flex justify-between text-xl font-bold text-pink-800 mb-6"><span>Toplam</span><span id="cart-total">0 ₺</span></div>
             <button onclick="showPage('checkout')" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-600 transition shadow-lg">Siparişi Tamamla</button>
         </div>
     </div>
 
     <!-- ===== CHECKOUT ===== -->
     <div id="page-checkout" class="page max-w-2xl mx-auto p-6">
-        <h2 class="text-2xl font-bold text-amber-800 mb-6">📋 Sipariş Bilgileri</h2>
+        <h2 class="text-2xl font-bold text-pink-800 mb-6">📋 Sipariş Bilgileri</h2>
         <div class="bg-white rounded-2xl p-6 shadow-lg space-y-6">
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-3">Sipariş Tipi</label>
@@ -202,8 +202,8 @@
                 </div>
             </div>
             <div><label class="block text-sm font-semibold text-gray-700 mb-2">Sipariş Notu (Opsiyonel)</label><textarea id="order-note" rows="2" placeholder="Alerji, özel istek vb." class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></textarea></div>
-            <div class="bg-amber-50 rounded-xl p-4 border-2 border-amber-200">
-                <div class="flex justify-between items-center mb-4"><span class="text-gray-700 font-semibold">Ödenecek Tutar:</span><span id="checkout-total" class="text-3xl font-bold text-amber-600">0 ₺</span></div>
+            <div class="bg-pink-50 rounded-xl p-4 border-2 border-pink-200">
+                <div class="flex justify-between items-center mb-4"><span class="text-gray-700 font-semibold">Ödenecek Tutar:</span><span id="checkout-total" class="text-3xl font-bold text-pink-600">0 ₺</span></div>
                 <button onclick="placeOrder()" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-600 transition shadow-lg">✅ Siparişi Onayla</button>
             </div>
         </div>
@@ -224,7 +224,7 @@
 
     <!-- ===== SİPARİŞLERİM ===== -->
     <div id="page-orders" class="page max-w-6xl mx-auto p-6">
-        <h2 class="text-2xl font-bold text-amber-800 mb-6">📦 Siparişlerim</h2>
+        <h2 class="text-2xl font-bold text-pink-800 mb-6">📦 Siparişlerim</h2>
         <div id="orders-list" class="space-y-4"></div>
         <div id="orders-empty" class="text-center py-12 hidden"><div class="text-6xl mb-4">📭</div><p class="text-gray-500">Henüz siparişiniz bulunmuyor</p></div>
     </div>
@@ -237,10 +237,10 @@
                 <h2 class="text-2xl font-bold text-gray-800">Admin Girişi</h2>
                 <p class="text-gray-500 text-sm">YK WAFFLE Yönetim Paneli</p>
             </div>
-            <input type="password" id="admin-password" placeholder="Şifrenizi girin" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-4 focus:border-amber-500 focus:outline-none transition">
-            <button onclick="adminLogin()" class="w-full bg-amber-500 text-white py-3 rounded-xl font-bold hover:bg-amber-600 transition">Giriş Yap</button>
+            <input type="password" id="admin-password" placeholder="Şifrenizi girin" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-4 focus:border-pink-500 focus:outline-none transition">
+            <button onclick="adminLogin()" class="w-full bg-pink-500 text-white py-3 rounded-xl font-bold hover:bg-pink-600 transition">Giriş Yap</button>
             <p id="admin-error" class="text-red-500 text-sm mt-3 text-center hidden">Hatalı şifre!</p>
-            <p class="text-xs text-gray-400 text-center mt-4">🔐| JWT Token: 24 saat</p>
+            <p class="text-xs text-gray-400 text-center mt-4">🔐 Varsayılan şifre: admin123 | JWT Token: 24 saat</p>
         </div>
     </div>
 
@@ -250,15 +250,15 @@
             <!-- Sidebar -->
             <div class="md:w-64 flex-shrink-0">
                 <div class="bg-white rounded-2xl p-4 shadow-lg sticky top-24">
-                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-amber-200">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-pink-200">
                         <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold">A</div>
                         <div><p class="font-bold text-gray-800">Admin</p><p class="text-xs text-gray-500">YK WAFFLE</p></div>
                     </div>
                     <nav class="space-y-2">
                         <button onclick="switchAdminTab('dashboard')" id="admin-tab-dashboard" class="w-full text-left px-4 py-3 rounded-xl admin-tab-active transition"><span class="mr-2">📊</span> Dashboard</button>
-                        <button onclick="switchAdminTab('orders')" id="admin-tab-orders" class="w-full text-left px-4 py-3 rounded-xl hover:bg-amber-50 text-gray-700 transition"><span class="mr-2">📋</span> Siparişler</button>
-                        <button onclick="switchAdminTab('products')" id="admin-tab-products" class="w-full text-left px-4 py-3 rounded-xl hover:bg-amber-50 text-gray-700 transition"><span class="mr-2">🍽️</span> Ürünler</button>
-                        <button onclick="switchAdminTab('settings')" id="admin-tab-settings" class="w-full text-left px-4 py-3 rounded-xl hover:bg-amber-50 text-gray-700 transition"><span class="mr-2">⚙️</span> Ayarlar</button>
+                        <button onclick="switchAdminTab('orders')" id="admin-tab-orders" class="w-full text-left px-4 py-3 rounded-xl hover:bg-pink-50 text-gray-700 transition"><span class="mr-2">📋</span> Siparişler</button>
+                        <button onclick="switchAdminTab('products')" id="admin-tab-products" class="w-full text-left px-4 py-3 rounded-xl hover:bg-pink-50 text-gray-700 transition"><span class="mr-2">🍽️</span> Ürünler</button>
+                        <button onclick="switchAdminTab('settings')" id="admin-tab-settings" class="w-full text-left px-4 py-3 rounded-xl hover:bg-pink-50 text-gray-700 transition"><span class="mr-2">⚙️</span> Ayarlar</button>
                         <button onclick="adminLogout()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition mt-4"><span class="mr-2">🚪</span> Çıkış Yap</button>
                     </nav>
                 </div>
@@ -270,7 +270,7 @@
                 <div id="admin-section-dashboard" class="admin-section active">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 Dashboard</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-amber-500">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-pink-500">
                             <p class="text-gray-500 text-sm">Toplam Sipariş</p>
                             <p id="stat-total-orders" class="text-3xl font-bold text-gray-800">0</p>
                         </div>
@@ -293,7 +293,7 @@
                 <div id="admin-section-orders" class="admin-section">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Sipariş Yönetimi</h2>
                     <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
-                        <button onclick="filterAdminOrders('all')" class="px-4 py-2 bg-amber-500 text-white rounded-full text-sm font-semibold whitespace-nowrap">Tümü</button>
+                        <button onclick="filterAdminOrders('all')" class="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-semibold whitespace-nowrap">Tümü</button>
                         <button onclick="filterAdminOrders('pending')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold whitespace-nowrap">Bekliyor</button>
                         <button onclick="filterAdminOrders('preparing')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold whitespace-nowrap">Hazırlanıyor</button>
                         <button onclick="filterAdminOrders('ready')" class="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold whitespace-nowrap">Hazır</button>
@@ -337,6 +337,14 @@
 
     <!-- JAVASCRIPT -->
     <script>
+        // ========== BİLDİRİM SESİ ==========
+        const notificationAudio = new Audio('data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==');
+        
+        function playNotificationSound() {
+            notificationAudio.currentTime = 0;
+            notificationAudio.play().catch(err => console.log('Ses oynatılamadı:', err));
+        }
+
         // ========== VERİLER ==========
         let products = [
             { id: 'r1', name: 'Sütlü Beyaz', price: 300, category: 'ready', desc: 'Sütlü ve beyaz çikolata' },
@@ -466,6 +474,15 @@
             try {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
+                
+                // Firebase'den merkezi şifre hash'ini yükle
+                db.ref('settings/admin_password_hash').once('value', (snapshot) => {
+                    if (snapshot.val()) {
+                        localStorage.setItem('ykwaffle_admin_pass_hash', snapshot.val());
+                        console.log('✅ Şifre Firebase\'den yüklendi');
+                    }
+                });
+                
                 loadOrdersFromFirebase();
                 loadOrdersFromLocalStorage();
                 // Kaydedilmiş token varsa yükle
@@ -541,10 +558,24 @@
         function loadOrdersFromFirebase() {
             if (!db) return;
             try {
+                let lastOrderCount = orders.length;
                 db.ref('orders').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        orders = Object.values(data).reverse();
+                        const newOrders = Object.values(data).reverse();
+                        // Yeni sipariş geldiyse ses çal
+                        if (newOrders.length > lastOrderCount && lastOrderCount > 0) {
+                            playNotificationSound();
+                            // Browser notification da gönder
+                            if (Notification.permission === 'granted') {
+                                new Notification('🎉 Yeni Sipariş!', {
+                                    body: 'Yeni bir sipariş geldi!',
+                                    icon: '🧇'
+                                });
+                            }
+                        }
+                        lastOrderCount = newOrders.length;
+                        orders = newOrders;
                         renderOrders();
                         saveOrdersToLocalStorage();
                     }
@@ -579,6 +610,14 @@
             initFirebase();
             renderProducts();
             renderAdminProducts();
+            
+            // Browser notification izni iste
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+            
+            // Sayfayı yükle (hash varsa oraya git)
+            restorePageFromHash();
         }
 
         function renderProducts() {
@@ -723,7 +762,13 @@
             const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const order = {
                 id: 'YK' + Date.now().toString().slice(-6),
-                items: [...cart],
+                items: [...cart].map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    customDetails: item.customDetails || null,
+                    detailSummary: item.detailSummary || null
+                })),
                 total,
                 type: orderType,
                 tableNo: tableNo || null,
@@ -750,24 +795,48 @@
             if (orders.length === 0) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
             empty.classList.add('hidden');
 
-            container.innerHTML = orders.map(order => {
-                const statusColors = { pending: 'bg-yellow-100 text-yellow-700', preparing: 'bg-blue-100 text-blue-700', ready: 'bg-green-100 text-green-700', delivered: 'bg-gray-100 text-gray-700' };
-                const statusTexts = { pending: 'Bekliyor', preparing: 'Hazırlanıyor', ready: 'Hazır', delivered: 'Teslim Edildi' };
-                return `
-                    <div class="bg-white rounded-2xl p-5 shadow-sm">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span></div>
-                                <p class="text-xs text-gray-500">${order.date}</p>
+            // Siparişleri tarih grubuna göre grupla
+            const groupedByDate = {};
+            orders.forEach(order => {
+                const orderDate = order.date.split(',')[0];
+                if (!groupedByDate[orderDate]) {
+                    groupedByDate[orderDate] = [];
+                }
+                groupedByDate[orderDate].push(order);
+            });
+
+            // Tarihleri ters sırada sırala
+            const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
+                const dateA = new Date(a.split('.').reverse().join('-'));
+                const dateB = new Date(b.split('.').reverse().join('-'));
+                return dateB - dateA;
+            });
+
+            let html = '';
+            sortedDates.forEach(date => {
+                html += `<div class="mb-6"><h3 class="text-lg font-bold text-amber-800 mb-3 pb-2 border-b-2 border-amber-300">📅 ${date}</h3>`;
+                html += groupedByDate[date].map(order => {
+                    const statusColors = { pending: 'bg-yellow-100 text-yellow-700', preparing: 'bg-blue-100 text-blue-700', ready: 'bg-green-100 text-green-700', delivered: 'bg-gray-100 text-gray-700' };
+                    const statusTexts = { pending: 'Bekliyor', preparing: 'Hazırlanıyor', ready: 'Hazır', delivered: 'Teslim Edildi' };
+                    return `
+                        <div class="bg-white rounded-2xl p-5 shadow-sm mb-3">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span></div>
+                                    <p class="text-xs text-gray-500">${order.date}</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColors[order.status]}">${statusTexts[order.status]}</span>
                             </div>
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColors[order.status]}">${statusTexts[order.status]}</span>
+                            <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<p class="text-sm text-gray-600">${item.quantity}x ${item.name}${item.detailSummary ? `<br/><span class="text-xs text-amber-600">📝 ${item.detailSummary}</span>` : ''}</p>`).join('')}</div>
+                            <div class="flex justify-between items-center border-t pt-3"><span class="text-sm text-gray-500">${order.payment === 'card' ? '💳 Kredi Kartı' : '💵 Nakit'}</span><span class="font-bold text-amber-600 text-lg">${order.total} ₺</span></div>
+                            ${order.note ? `<p class="text-xs text-amber-600 mt-2">📝 ${order.note}</p>` : ''}
                         </div>
-                        <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<p class="text-sm text-gray-600">${item.quantity}x ${item.name}</p>`).join('')}</div>
-                        <div class="flex justify-between items-center border-t pt-3"><span class="text-sm text-gray-500">${order.payment === 'card' ? '💳 Kredi Kartı' : '💵 Nakit'}</span><span class="font-bold text-amber-600 text-lg">${order.total} ₺</span></div>
-                        ${order.note ? `<p class="text-xs text-amber-600 mt-2">📝 ${order.note}</p>` : ''}
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
         }
 
         // ========== ADMIN ==========
@@ -783,6 +852,11 @@
                 // JWT token oluştur
                 const { token, expiry } = generateJWT('Admin');
                 setAdminToken(token, expiry);
+                
+                // Firebase'e şifre hash'ini kaydet (merkezi)
+                if (db) {
+                    db.ref('settings/admin_password_hash').set(storedHash);
+                }
                 
                 // Firebase logging
                 saveAdminLogToFirebase('Admin Girişi', 'Admin', 'Başarılı giriş - ' + new Date().toLocaleTimeString('tr-TR'));
@@ -801,6 +875,7 @@
             clearAdminToken();
             saveAdminLogToFirebase('Admin Çıkışı', 'Admin', 'Oturum kapatıldı - ' + new Date().toLocaleTimeString('tr-TR'));
             alert('✅ Oturum kapatıldı');
+            window.location.hash = 'home';
             showPage('home');
         }
 
@@ -850,32 +925,56 @@
             const container = document.getElementById('admin-orders-list');
             if (filtered.length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Sipariş bulunmuyor</p>'; return; }
 
-            container.innerHTML = filtered.map(order => {
-                const statusOptions = { pending: 'Bekliyor', preparing: 'Hazırlanıyor', ready: 'Hazır', delivered: 'Teslim Edildi', cancelled: 'İptal' };
-                return `
-                    <div class="bg-white rounded-2xl p-5 shadow-sm">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span></div>
-                                <p class="text-xs text-gray-500">${order.date}</p>
+            // Siparişleri tarih grubuna göre grupla
+            const groupedByDate = {};
+            filtered.forEach(order => {
+                const orderDate = order.date.split(',')[0]; // Tarihi al (HH:MM,SS öncesi)
+                if (!groupedByDate[orderDate]) {
+                    groupedByDate[orderDate] = [];
+                }
+                groupedByDate[orderDate].push(order);
+            });
+
+            // Tarihleri ters sırada (yeni önce) sırala
+            const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
+                const dateA = new Date(a.split('.').reverse().join('-'));
+                const dateB = new Date(b.split('.').reverse().join('-'));
+                return dateB - dateA;
+            });
+
+            let html = '';
+            sortedDates.forEach(date => {
+                html += `<div class="mb-6"><h3 class="text-lg font-bold text-amber-800 mb-3 pb-2 border-b-2 border-amber-300">📅 ${date}</h3>`;
+                html += groupedByDate[date].map(order => {
+                    const statusOptions = { pending: 'Bekliyor', preparing: 'Hazırlanıyor', ready: 'Hazır', delivered: 'Teslim Edildi', cancelled: 'İptal' };
+                    return `
+                        <div class="bg-white rounded-2xl p-5 shadow-sm mb-3">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span></div>
+                                    <p class="text-xs text-gray-500">${order.date}</p>
+                                </div>
+                                <select onchange="updateOrderStatus('${order.id}', this.value)" class="border-2 border-gray-200 rounded-lg px-3 py-1 text-sm focus:border-amber-500 focus:outline-none">
+                                    ${Object.entries(statusOptions).map(([val, text]) => `<option value="${val}" ${order.status === val ? 'selected' : ''}>${text}</option>`).join('')}
+                                </select>
                             </div>
-                            <select onchange="updateOrderStatus('${order.id}', this.value)" class="border-2 border-gray-200 rounded-lg px-3 py-1 text-sm focus:border-amber-500 focus:outline-none">
-                                ${Object.entries(statusOptions).map(([val, text]) => `<option value="${val}" ${order.status === val ? 'selected' : ''}>${text}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<div class="flex justify-between text-sm"><span>${item.quantity}x ${item.name}</span><span class="text-gray-500">${item.price * item.quantity} ₺</span></div>`).join('')}</div>
-                        <div class="flex justify-between items-center border-t pt-3">
-                            <div class="text-sm text-gray-600">
-                                <p>👤 ${order.customer.name || '-'}</p>
-                                <p>📞 ${order.customer.phone || '-'}</p>
-                                <p>📍 ${order.customer.address || '-'}</p>
-                                ${order.note ? `<p class="text-amber-600 mt-1">📝 ${order.note}</p>` : ''}
+                            <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<div class="flex justify-between text-sm"><span>${item.quantity}x ${item.name}</span><span class="text-gray-500">${item.price * item.quantity} ₺</span>${item.detailSummary ? `<br/><span class="text-xs text-amber-600">📝 ${item.detailSummary}</span>` : ''}</div>`).join('')}</div>
+                            <div class="flex justify-between items-center border-t pt-3">
+                                <div class="text-sm text-gray-600">
+                                    <p>👤 ${order.customer.name || '-'}</p>
+                                    <p>📞 ${order.customer.phone || '-'}</p>
+                                    <p>📍 ${order.customer.address || '-'}</p>
+                                    ${order.note ? `<p class="text-amber-600 mt-1">📝 ${order.note}</p>` : ''}
+                                </div>
+                                <div class="text-right"><p class="text-2xl font-bold text-amber-600">${order.total} ₺</p><p class="text-xs text-gray-500">${order.payment === 'card' ? 'Kredi Kartı' : 'Nakit'}</p></div>
                             </div>
-                            <div class="text-right"><p class="text-2xl font-bold text-amber-600">${order.total} ₺</p><p class="text-xs text-gray-500">${order.payment === 'card' ? 'Kredi Kartı' : 'Nakit'}</p></div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
         }
 
         function updateOrderStatus(orderId, status) {
@@ -941,8 +1040,16 @@
                 adminPassword = newPassword;
                 const newHash = hashPassword(newPassword);
                 localStorage.setItem('ykwaffle_admin_pass_hash', newHash);
+                
+                // Firebase'e merkezi olarak kaydet (tüm cihazlar için)
+                if (db) {
+                    db.ref('settings/admin_password_hash').set(newHash).then(() => {
+                        console.log('✅ Şifre Firebase\'e kaydedildi');
+                    });
+                }
+                
                 saveAdminLogToFirebase('Ayarlar Güncelleme', 'Admin', 'Admin şifresi değiştirildi');
-                alert("✅ Yeni şifre kaydedildi! Sonraki girişte kullanabilirsiniz.");
+                alert("✅ Yeni şifre kaydedildi! Sonraki girişte kullanabilirsiniz.\n💡 Tüm cihazlarda geçerli olacaktır.");
                 document.getElementById('setting-password').value = '';
             } else {
                 alert("❌ Şifre en az 6 karakter olmalı!");
@@ -968,7 +1075,24 @@
             if (pageName === 'admin') {
                 switchAdminTab('dashboard');
             }
+            
+            // URL hash'i güncelle (sayfayı yenilesen de bu sekmede kalarsın)
+            window.location.hash = pageName;
+            
             window.scrollTo(0, 0);
+        }
+
+        // Sayfa yüklendiyinde hash'i kontrol et
+        function restorePageFromHash() {
+            const hash = window.location.hash.slice(1) || 'home';
+            const validPages = ['home', 'cart', 'checkout', 'success', 'orders', 'admin-login', 'admin'];
+            if (validPages.includes(hash)) {
+                if (hash === 'admin' && !isAdminLoggedIn()) {
+                    showPage('home');
+                } else {
+                    showPage(hash);
+                }
+            }
         }
 
         function switchTab(tabName) {
@@ -1045,19 +1169,37 @@
             let total = parseInt(basePrice);
             let extraFee = 0;
             const groups = { chocolate: { limit: 2 }, fruit: { limit: 3 }, sauce: { limit: 2 }, topping: { limit: 3 } };
+            
+            // Seçilen detayları topla
+            let customDetails = {};
+            let detailSummary = [];
+            
             for (let [groupKey, config] of Object.entries(groups)) {
                 const checked = document.querySelectorAll(`input[data-group="${groupKey}"]:checked`);
+                const selected = [];
                 checked.forEach(cb => {
                     const [n, p] = cb.value.split('|');
+                    selected.push(n);
                     total += parseInt(p);
                 });
+                if (selected.length > 0) {
+                    customDetails[groupKey] = selected;
+                    detailSummary.push(selected.join(', '));
+                }
                 if (checked.length > config.limit) extraFee += (checked.length - config.limit) * 20;
             }
+            
             total += extraFee;
             const itemName = "Kendi Waffle'ım - " + baseName;
             const existing = cart.find(item => item.name === itemName);
             if (existing) existing.quantity++;
-            else cart.push({ name: itemName, price: total, quantity: 1 });
+            else cart.push({ 
+                name: itemName, 
+                price: total, 
+                quantity: 1,
+                customDetails: customDetails,
+                detailSummary: detailSummary.join(' | ')
+            });
             updateCartUI();
             alert(itemName + " sepete eklendi! Toplam: " + total + " ₺ 🛒");
             document.querySelectorAll('#section-custom input').forEach(input => {
@@ -1121,6 +1263,9 @@
 
         // Başlat
         init();
+
+        // Hash değişirse sayfa yüklensin
+        window.addEventListener('hashchange', restorePageFromHash);
     </script>
 
 </body>
