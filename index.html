@@ -338,11 +338,26 @@
     <!-- JAVASCRIPT -->
     <script>
         // ========== BİLDİRİM SESİ ==========
-        const notificationAudio = new Audio('data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==');
-        
         function playNotificationSound() {
-            notificationAudio.currentTime = 0;
-            notificationAudio.play().catch(err => console.log('Ses oynatılamadı:', err));
+            // Web Audio API ile basit bir bip sesi oluştur
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (err) {
+                console.log('Ses oynatılamadı:', err);
+            }
         }
 
         // ========== VERİLER ==========
@@ -795,6 +810,14 @@
             if (orders.length === 0) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
             empty.classList.add('hidden');
 
+            // Tarih filtreleme için input ekle
+            let html = `
+                <div class="mb-6 flex gap-2">
+                    <input type="date" id="filter-date" class="border-2 border-pink-300 rounded-lg px-4 py-2" onchange="filterOrdersByDate(this.value)">
+                    <button onclick="document.getElementById('filter-date').value = ''; location.reload();" class="bg-pink-200 text-pink-800 px-4 py-2 rounded-lg font-semibold">Tümünü Göster</button>
+                </div>
+            `;
+
             // Siparişleri tarih grubuna göre grupla
             const groupedByDate = {};
             orders.forEach(order => {
@@ -812,24 +835,30 @@
                 return dateB - dateA;
             });
 
-            let html = '';
             sortedDates.forEach(date => {
-                html += `<div class="mb-6"><h3 class="text-lg font-bold text-amber-800 mb-3 pb-2 border-b-2 border-amber-300">📅 ${date}</h3>`;
+                html += `<div class="mb-6"><h3 class="text-lg font-bold text-pink-800 mb-3 pb-2 border-b-2 border-pink-300">📅 ${date}</h3>`;
                 html += groupedByDate[date].map(order => {
                     const statusColors = { pending: 'bg-yellow-100 text-yellow-700', preparing: 'bg-blue-100 text-blue-700', ready: 'bg-green-100 text-green-700', delivered: 'bg-gray-100 text-gray-700' };
                     const statusTexts = { pending: 'Bekliyor', preparing: 'Hazırlanıyor', ready: 'Hazır', delivered: 'Teslim Edildi' };
+                    const timePart = order.date.split(',')[1] || 'N/A';
                     return `
                         <div class="bg-white rounded-2xl p-5 shadow-sm mb-3">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
-                                    <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span></div>
-                                    <p class="text-xs text-gray-500">${order.date}</p>
+                                    <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span><span class="text-xs text-gray-500">⏰ ${timePart}</span></div>
+                                    <p class="text-xs text-gray-500"></p>
                                 </div>
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColors[order.status]}">${statusTexts[order.status]}</span>
                             </div>
-                            <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<p class="text-sm text-gray-600">${item.quantity}x ${item.name}${item.detailSummary ? `<br/><span class="text-xs text-amber-600">📝 ${item.detailSummary}</span>` : ''}</p>`).join('')}</div>
-                            <div class="flex justify-between items-center border-t pt-3"><span class="text-sm text-gray-500">${order.payment === 'card' ? '💳 Kredi Kartı' : '💵 Nakit'}</span><span class="font-bold text-amber-600 text-lg">${order.total} ₺</span></div>
-                            ${order.note ? `<p class="text-xs text-amber-600 mt-2">📝 ${order.note}</p>` : ''}
+                            <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<p class="text-sm text-gray-600">${item.quantity}x ${item.name}${item.detailSummary ? `<br/><span class="text-xs text-pink-600 font-semibold">📝 ${item.detailSummary}</span>` : ''}</p>`).join('')}</div>
+                            <div class="flex justify-between items-center border-t pt-3">
+                                <div class="flex gap-2">
+                                    <span class="text-sm text-gray-500">${order.payment === 'card' ? '💳' : '💵'}</span>
+                                    <button onclick="repeatOrder('${order.id}')" class="text-xs bg-pink-100 text-pink-700 px-3 py-1 rounded-full hover:bg-pink-200">🔄 Tekrarla</button>
+                                </div>
+                                <span class="font-bold text-pink-600 text-lg">${order.total} ₺</span>
+                            </div>
+                            ${order.note ? `<p class="text-xs text-pink-600 mt-2">📝 ${order.note}</p>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -839,35 +868,101 @@
             container.innerHTML = html;
         }
 
+        function filterOrdersByDate(date) {
+            if (!date) return;
+            const filtered = orders.filter(o => o.date.split(',')[0] === date);
+            const container = document.getElementById('orders-list');
+            const empty = document.getElementById('orders-empty');
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            let html = '';
+            html += filtered.map(order => {
+                const statusColors = { pending: 'bg-yellow-100 text-yellow-700', preparing: 'bg-blue-100 text-blue-700', ready: 'bg-green-100 text-green-700', delivered: 'bg-gray-100 text-gray-700' };
+                const statusTexts = { pending: 'Bekliyor', preparing: 'Hazırlanıyor', ready: 'Hazır', delivered: 'Teslim Edildi' };
+                const timePart = order.date.split(',')[1] || 'N/A';
+                return `
+                    <div class="bg-white rounded-2xl p-5 shadow-sm mb-3">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="flex items-center gap-2"><p class="font-bold text-lg text-gray-800">#${order.id}</p><span class="text-xs px-2 py-1 rounded-full ${order.type === 'table' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}">${order.type === 'table' ? 'Masa ' + order.tableNo : 'Eve Teslimat'}</span><span class="text-xs text-gray-500">⏰ ${timePart}</span></div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColors[order.status]}">${statusTexts[order.status]}</span>
+                        </div>
+                        <div class="space-y-1 mb-3 bg-gray-50 rounded-xl p-3">${order.items.map(item => `<p class="text-sm text-gray-600">${item.quantity}x ${item.name}${item.detailSummary ? `<br/><span class="text-xs text-pink-600 font-semibold">📝 ${item.detailSummary}</span>` : ''}</p>`).join('')}</div>
+                        <div class="flex justify-between items-center border-t pt-3">
+                            <div class="flex gap-2">
+                                <span class="text-sm text-gray-500">${order.payment === 'card' ? '💳' : '💵'}</span>
+                                <button onclick="repeatOrder('${order.id}')" class="text-xs bg-pink-100 text-pink-700 px-3 py-1 rounded-full hover:bg-pink-200">🔄 Tekrarla</button>
+                            </div>
+                            <span class="font-bold text-pink-600 text-lg">${order.total} ₺</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function repeatOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            order.items.forEach(item => {
+                const existing = cart.find(c => c.name === item.name);
+                if (existing) existing.quantity += item.quantity;
+                else cart.push({ 
+                    name: item.name, 
+                    price: item.price, 
+                    quantity: item.quantity,
+                    customDetails: item.customDetails || null,
+                    detailSummary: item.detailSummary || null
+                });
+            });
+            
+            updateCartUI();
+            alert('✅ Sipariş sepete eklendi!');
+            showPage('cart');
+        }
+
         // ========== ADMIN ==========
         function adminLogin() {
             const pass = document.getElementById('admin-password').value;
-            const passHash = hashPassword(pass);
-            const storedHash = localStorage.getItem('ykwaffle_admin_pass_hash') || hashPassword(adminPassword);
+            if (!pass) {
+                alert('❌ Lütfen şifre girin!');
+                return;
+            }
             
-            if (passHash === storedHash) {
-                document.getElementById('admin-password').value = '';
-                document.getElementById('admin-error').classList.add('hidden');
-                
-                // JWT token oluştur
-                const { token, expiry } = generateJWT('Admin');
-                setAdminToken(token, expiry);
-                
-                // Firebase'e şifre hash'ini kaydet (merkezi)
-                if (db) {
-                    db.ref('settings/admin_password_hash').set(storedHash);
-                }
-                
-                // Firebase logging
-                saveAdminLogToFirebase('Admin Girişi', 'Admin', 'Başarılı giriş - ' + new Date().toLocaleTimeString('tr-TR'));
-                alert('✅ Hoş geldiniz! Oturum süresi: 24 saat');
-                showPage('admin');
-                renderAdminDashboard();
-                renderAdminOrders('all');
-            } else {
-                document.getElementById('admin-error').classList.remove('hidden');
-                // Firebase logging - başarısız giriş
-                saveAdminLogToFirebase('Başarısız Giriş Denemesi', 'Bilinmeyen', 'Hatalı şifre - ' + new Date().toLocaleTimeString('tr-TR'));
+            const passHash = hashPassword(pass);
+            
+            // Firebase'den hash'i al
+            if (db) {
+                db.ref('settings/admin_password_hash').once('value', (snapshot) => {
+                    const firebaseHash = snapshot.val();
+                    const storedHash = firebaseHash || hashPassword('admin123');
+                    
+                    if (passHash === storedHash) {
+                        document.getElementById('admin-password').value = '';
+                        document.getElementById('admin-error').classList.add('hidden');
+                        
+                        // JWT token oluştur
+                        const { token, expiry } = generateJWT('Admin');
+                        setAdminToken(token, expiry);
+                        
+                        saveAdminLogToFirebase('Admin Girişi', 'Admin', 'Başarılı giriş - ' + new Date().toLocaleTimeString('tr-TR'));
+                        alert('✅ Hoş geldiniz! Oturum süresi: 24 saat');
+                        showPage('admin');
+                        renderAdminDashboard();
+                        renderAdminOrders('all');
+                    } else {
+                        document.getElementById('admin-error').classList.remove('hidden');
+                        saveAdminLogToFirebase('Başarısız Giriş', 'Bilinmeyen', 'Hatalı şifre');
+                    }
+                });
             }
         }
 
