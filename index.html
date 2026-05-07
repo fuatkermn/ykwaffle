@@ -508,22 +508,41 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
                 
-                // Firebase'den merkezi şifre hash'ini yükle
-                db.ref('settings/admin_password_hash').once('value', (snapshot) => {
-                    if (snapshot.val()) {
-                        localStorage.setItem('ykwaffle_admin_pass_hash', snapshot.val());
-                        console.log('✅ Şifre Firebase\'den yüklendi');
+                // Firebase bağlantısı test et
+                db.ref('.info/connected').on('value', (snapshot) => {
+                    if (snapshot.val() === true) {
+                        console.log('✅ Firebase gerçek zamanlı bağlantısı başarılı');
+                        
+                        // Firebase'den merkezi şifre hash'ini yükle
+                        db.ref('settings/admin_password_hash').once('value', (snapshot) => {
+                            if (snapshot.val()) {
+                                localStorage.setItem('ykwaffle_admin_pass_hash', snapshot.val());
+                                console.log('✅ Admin şifresi Firebase\'den yüklendi');
+                            } else {
+                                console.log('⚠️ Firebase\'de şifre kaydı yok, varsayılan kullanılacak');
+                                // İlk kez ise varsayılan şifreyi kaydet
+                                const defaultHash = hashPassword('admin123');
+                                db.ref('settings/admin_password_hash').set(defaultHash);
+                                localStorage.setItem('ykwaffle_admin_pass_hash', defaultHash);
+                            }
+                        }).catch(err => {
+                            console.warn('Firebase hash okuma hatası:', err);
+                        });
+                    } else {
+                        console.warn('⚠️ Firebase offline - localStorage kullanılıyor');
                     }
                 });
                 
                 loadOrdersFromFirebase();
                 loadOrdersFromLocalStorage();
+                
                 // Kaydedilmiş token varsa yükle
                 const savedToken = getAdminToken();
                 if (savedToken && validateJWT(savedToken)) {
                     adminToken = savedToken;
+                    console.log('✅ Admin token yüklendi');
                 }
-                console.log('✅ Firebase bağlantısı başarılı');
+                console.log('✅ Firebase bağlantısı başlatıldı');
             } catch (err) {
                 console.error('Firebase hatası:', err);
                 // Offline mode
@@ -956,32 +975,85 @@
             }
             
             const passHash = hashPassword(pass);
+            const errorEl = document.getElementById('admin-error');
             
-            // Firebase'den hash'i al
+            console.log('🔐 Admin login deneniyor...');
+            
+            // Önce localStorage'dan kontrol et (hızlı)
+            const localHash = localStorage.getItem('ykwaffle_admin_pass_hash');
+            console.log('📍 Local hash:', localHash ? 'VAR' : 'YOK');
+            console.log('📍 Girilen şifre hash:', passHash);
+            
+            // Firebase'den de kontrol et
             if (db) {
                 db.ref('settings/admin_password_hash').once('value', (snapshot) => {
                     const firebaseHash = snapshot.val();
-                    const storedHash = firebaseHash || hashPassword('admin123');
+                    console.log('📍 Firebase hash:', firebaseHash ? 'VAR' : 'YOK');
                     
-                    if (passHash === storedHash) {
-                        document.getElementById('admin-password').value = '';
-                        document.getElementById('admin-error').classList.add('hidden');
-                        
-                        // JWT token oluştur
-                        const { token, expiry } = generateJWT('Admin');
-                        setAdminToken(token, expiry);
-                        
-                        saveAdminLogToFirebase('Admin Girişi', 'Admin', 'Başarılı giriş - ' + new Date().toLocaleTimeString('tr-TR'));
-                        alert('✅ Hoş geldiniz! Oturum süresi: 24 saat');
-                        showPage('admin');
-                        renderAdminDashboard();
-                        renderAdminOrders('all');
+                    // Hangisinin olduğunu bulma
+                    const validHash = firebaseHash || localHash || hashPassword('admin123');
+                    console.log('✅ Geçerli hash:', validHash ? 'BULUNDU' : 'KULLANILAMADI');
+                    
+                    // İlk kez ise Firebase'e kaydet
+                    if (!firebaseHash && (localHash || passHash === hashPassword('admin123'))) {
+                        db.ref('settings/admin_password_hash').set(validHash);
+                        console.log('💾 Şifre Firebase\'e kaydedildi');
+                    }
+                    
+                    if (passHash === validHash) {
+                        console.log('✅ Şifre DOĞRU - Giriş yapılıyor');
+                        performLogin(validHash);
                     } else {
-                        document.getElementById('admin-error').classList.remove('hidden');
-                        saveAdminLogToFirebase('Başarısız Giriş', 'Bilinmeyen', 'Hatalı şifre');
+                        console.log('❌ Şifre YANLIŞI');
+                        errorEl.classList.remove('hidden');
+                        errorEl.textContent = '❌ Şifre hatalı! Lütfen tekrar deneyin.';
+                    }
+                }).catch(err => {
+                    console.error('Firebase okuma hatası:', err);
+                    // Firebase hatasında localhost kontrolü
+                    const fallbackHash = localHash || hashPassword('admin123');
+                    if (passHash === fallbackHash) {
+                        console.log('✅ Fallback ile giriş yapılıyor');
+                        performLogin(fallbackHash);
+                    } else {
+                        errorEl.classList.remove('hidden');
+                        errorEl.textContent = '❌ Şifre hatalı veya bağlantı sorunu var!';
                     }
                 });
+            } else {
+                console.warn('⚠️ Firebase bağlı değil, localStorage kontrol ediliyor');
+                // Firebase bağlı değilse localStorage'a güven
+                const fallbackHash = localHash || hashPassword('admin123');
+                if (passHash === fallbackHash) {
+                    console.log('✅ LocalStorage ile giriş yapılıyor');
+                    performLogin(fallbackHash);
+                } else {
+                    errorEl.classList.remove('hidden');
+                    errorEl.textContent = '❌ Şifre hatalı!';
+                }
             }
+        }
+
+        function performLogin(validHash) {
+            const errorEl = document.getElementById('admin-error');
+            document.getElementById('admin-password').value = '';
+            errorEl.classList.add('hidden');
+            
+            // Firebase'e kaydet
+            if (db) {
+                db.ref('settings/admin_password_hash').set(validHash);
+            }
+            localStorage.setItem('ykwaffle_admin_pass_hash', validHash);
+            
+            // JWT token oluştur
+            const { token, expiry } = generateJWT('Admin');
+            setAdminToken(token, expiry);
+            
+            saveAdminLogToFirebase('Admin Girişi', 'Admin', 'Başarılı giriş - ' + new Date().toLocaleTimeString('tr-TR'));
+            alert('✅ Hoş geldiniz! Oturum süresi: 24 saat');
+            showPage('admin');
+            renderAdminDashboard();
+            renderAdminOrders('all');
         }
 
         function adminLogout() {
