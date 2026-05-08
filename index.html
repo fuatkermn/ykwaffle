@@ -519,7 +519,8 @@
                         name: p.name,
                         price: Number(p.price) || 0,
                         category: p.category || 'ready',
-                        desc: p.desc || ''
+                        desc: p.desc || '',
+                        image: p.image || ''
                     }));
 
                     // Tek kaynak Firebase: silinen ürün geri gelmez
@@ -541,7 +542,8 @@
                     name: p.name,
                     price: p.price,
                     category: p.category,
-                    desc: p.desc || ''
+                    desc: p.desc || '',
+                    image: p.image || ''
                 };
             });
 
@@ -704,9 +706,13 @@
         }
 
         function productCard(p) {
+            const fallbackEmoji = p.category === 'ready' && p.name.includes('Bubble') ? '🥣' : p.name.includes('Bardakta') ? '🥤' : '🧇';
+            const mediaHtml = p.image
+                ? `<img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='${fallbackEmoji}'">`
+                : fallbackEmoji;
             return `
                 <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition">
-                    <div class="h-40 bg-amber-200 flex items-center justify-center text-amber-600 text-4xl">${p.category === 'ready' && p.name.includes('Bubble') ? '🥣' : p.name.includes('Bardakta') ? '🥤' : '🧇'}</div>
+                    <div class="h-40 bg-amber-200 flex items-center justify-center text-amber-600 text-4xl overflow-hidden">${mediaHtml}</div>
                     <div class="p-4">
                         <h4 class="font-bold text-gray-800">${p.name}</h4>
                         <p class="text-xs text-gray-500 mb-2">${p.desc}</p>
@@ -1269,12 +1275,14 @@
             const category = ['ready', 'cold', 'hot'].includes(categoryStr) ? categoryStr : 'ready';
             
             const id = 'p' + Date.now();
+            const image = prompt('Görsel URL (opsiyonel):', '') || '';
             products.push({
                 id: id,
                 name: name,
                 price: parseInt(priceStr),
                 category: category,
-                desc: ''
+                desc: '',
+                image: image
             });
             
             if (db) {
@@ -1282,7 +1290,8 @@
                     name: name,
                     price: parseInt(priceStr),
                     category: category,
-                    desc: ''
+                    desc: '',
+                    image: image
                 });
             }
             
@@ -1306,18 +1315,21 @@
             
             const newPrice = prompt('Fiyat (₺):', p.price);
             if (!newPrice || isNaN(newPrice)) return;
+            const newImage = prompt('Görsel URL (boş bırakılırsa kaldırılır):', p.image || '');
             
             const oldName = p.name;
             const oldPrice = p.price;
             p.name = newName;
             p.price = parseInt(newPrice);
+            p.image = newImage || '';
             
             if (db) {
                 db.ref('products/' + id).update({
                     name: newName,
                     price: parseInt(newPrice),
                     category: p.category,
-                    desc: p.desc || ''
+                    desc: p.desc || '',
+                    image: p.image || ''
                 });
             }
             
