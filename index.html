@@ -433,6 +433,11 @@
             return CryptoJS.SHA256(password + PASSWORD_SALT).toString();
         }
 
+        // Eski sürümde kullanılan salt ile geriye dönük uyumluluk
+        function hashPasswordLegacy(password) {
+            return CryptoJS.SHA256(password + 'ykwaffle_secret_key_2024').toString();
+        }
+
         function getAdminSessionExpiry() {
             return parseInt(localStorage.getItem('ykwaffle_admin_session_expiry') || '0', 10);
         }
@@ -930,6 +935,7 @@
             }
             
             const passHash = hashPassword(pass);
+            const legacyPassHash = hashPasswordLegacy(pass);
             const errorEl = document.getElementById('admin-error');
             
             // Firebase'den merkezi şifre kontrolü
@@ -943,7 +949,12 @@
                     }
                     
                     if (passHash === storedHash) {
+                        // Zaten yeni hash formatı
                         performLogin(storedHash);
+                    } else if (legacyPassHash === storedHash) {
+                        // Eski hash ile eşleşti: otomatik yeni formata geçir
+                        const migratedHash = passHash;
+                        performLogin(migratedHash);
                     } else {
                         errorEl.classList.remove('hidden');
                         errorEl.textContent = '❌ Şifre hatalı! Lütfen tekrar deneyin.';
