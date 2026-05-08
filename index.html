@@ -385,7 +385,7 @@
         }
 
         // ========== VERİLER ==========
-        let products = [
+        const DEFAULT_PRODUCTS = [
             { id: 'r1', name: 'Sütlü Beyaz', price: 300, category: 'ready', desc: 'Sütlü ve beyaz çikolata' },
             { id: 'r2', name: 'Lüks Waffle', price: 375, category: 'ready', desc: 'Özel malzemelerle' },
             { id: 'r3', name: 'Ballı Waffle', price: 375, category: 'ready', desc: 'Doğal bal ile' },
@@ -411,6 +411,7 @@
             { id: 'h5', name: 'Türk Kahvesi', price: 75, category: 'hot', desc: '' },
             { id: 'h6', name: 'Çay', price: 75, category: 'hot', desc: '' }
         ];
+        let products = [...DEFAULT_PRODUCTS];
 
         let cart = [];
         let orders = [];
@@ -505,7 +506,11 @@
             try {
                 db.ref('products').on('value', (snapshot) => {
                     const data = snapshot.val();
-                    if (!data) return;
+                    if (!data) {
+                        // İlk kurulum: varsayılan ürünleri Firebase'e yaz
+                        seedDefaultProductsToFirebase();
+                        return;
+                    }
 
                     const remoteProducts = Object.entries(data).map(([id, p]) => ({
                         id,
@@ -515,11 +520,8 @@
                         desc: p.desc || ''
                     }));
 
-                    // Firebase'deki ürünleri mevcut listeyle birleştir.
-                    // Böylece hazır ürünler Firebase'de eksik olsa bile kaybolmaz.
-                    const mergedById = new Map(products.map(p => [p.id, p]));
-                    remoteProducts.forEach(p => mergedById.set(p.id, p));
-                    products = Array.from(mergedById.values());
+                    // Tek kaynak Firebase: silinen ürün geri gelmez
+                    products = remoteProducts;
 
                     renderProducts();
                     renderAdminProducts();
@@ -527,6 +529,23 @@
             } catch (err) {
                 console.error('Ürünleri Firebase\'den yükleme hatası:', err);
             }
+        }
+
+        function seedDefaultProductsToFirebase() {
+            if (!db) return;
+            const updates = {};
+            DEFAULT_PRODUCTS.forEach((p) => {
+                updates[p.id] = {
+                    name: p.name,
+                    price: p.price,
+                    category: p.category,
+                    desc: p.desc || ''
+                };
+            });
+
+            db.ref('products').set(updates).catch((err) => {
+                console.error('Varsayılan ürünleri Firebase\'e yazma hatası:', err);
+            });
         }
 
         // ========== TELEFON DOĞRULAMA ==========
