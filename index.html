@@ -73,10 +73,10 @@
             <div class="bg-white rounded-2xl p-6 shadow-lg">
                 <h3 class="text-xl font-bold text-amber-800 mb-4">🎯 Adım 1: Taban Seçimi</h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8" id="custom-bases">
-                    <label class="option-box"><input type="radio" name="base" value="Çiçek Waffle|250" onchange="updateCustom()"><div class="font-semibold text-sm">🌸 Çiçek Waffle</div><div class="text-amber-600 text-xs font-bold">250 ₺</div></label>
-                    <label class="option-box"><input type="radio" name="base" value="Bubble Kase|300" onchange="updateCustom()"><div class="font-semibold text-sm">🥣 Bubble Kase</div><div class="text-amber-600 text-xs font-bold">300 ₺</div></label>
-                    <label class="option-box"><input type="radio" name="base" value="Bubble Servis|350" onchange="updateCustom()"><div class="font-semibold text-sm">🍽️ Bubble Servis</div><div class="text-amber-600 text-xs font-bold">350 ₺</div></label>
-                    <label class="option-box"><input type="radio" name="base" value="Bardakta Waffle|200" onchange="updateCustom()"><div class="font-semibold text-sm">🥤 Bardakta</div><div class="text-amber-600 text-xs font-bold">200 ₺</div></label>
+                    <label class="option-box"><input type="radio" name="base" value="Çiçek Waffle|300" onchange="updateCustom()"><div class="font-semibold text-sm">🌸 Çiçek Waffle</div><div class="text-amber-600 text-xs font-bold">300 ₺</div></label>
+                    <label class="option-box"><input type="radio" name="base" value="Bubble Kase|350" onchange="updateCustom()"><div class="font-semibold text-sm">🥣 Bubble Kase</div><div class="text-amber-600 text-xs font-bold">350 ₺</div></label>
+                    <label class="option-box"><input type="radio" name="base" value="Bubble Servis|500" onchange="updateCustom()"><div class="font-semibold text-sm">🍽️ Bubble Servis</div><div class="text-amber-600 text-xs font-bold">500 ₺</div></label>
+                    <label class="option-box"><input type="radio" name="base" value="Bardakta Waffle|350" onchange="updateCustom()"><div class="font-semibold text-sm">🥤 Bardakta</div><div class="text-amber-600 text-xs font-bold">350 ₺</div></label>
                 </div>
 
                 <h3 class="text-xl font-bold text-amber-800 mb-4">🍫 Adım 2: Çikolatalar <span class="text-sm font-normal text-gray-500">(Max 2 - Fazlası +20₺)</span></h3>
@@ -512,12 +512,14 @@
                         desc: p.desc || ''
                     }));
 
-                    // Firebase'de ürünler varsa yereli onunla senkronla
-                    if (remoteProducts.length > 0) {
-                        products = remoteProducts;
-                        renderProducts();
-                        renderAdminProducts();
-                    }
+                    // Firebase'deki ürünleri mevcut listeyle birleştir.
+                    // Böylece hazır ürünler Firebase'de eksik olsa bile kaybolmaz.
+                    const mergedById = new Map(products.map(p => [p.id, p]));
+                    remoteProducts.forEach(p => mergedById.set(p.id, p));
+                    products = Array.from(mergedById.values());
+
+                    renderProducts();
+                    renderAdminProducts();
                 });
             } catch (err) {
                 console.error('Ürünleri Firebase\'den yükleme hatası:', err);
