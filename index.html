@@ -246,6 +246,11 @@
 
     <!-- ===== ADMIN PANELİ ===== -->
     <div id="page-admin" class="page max-w-6xl mx-auto p-6">
+        <!-- BİLDİRİM DURUMU BANNER -->
+        <div id="notification-banner" class="mb-6 p-4 rounded-lg text-sm font-semibold text-center">
+            <!-- JavaScript ile doldurulacak -->
+        </div>
+
         <div class="flex flex-col md:flex-row gap-6">
             <!-- Sidebar -->
             <div class="md:w-64 flex-shrink-0">
@@ -349,38 +354,81 @@
 
     <!-- JAVASCRIPT -->
     <script>
-        // ========== BİLDİRİM SESİ ==========
+        // ========== BİLDİRİM SESİ (UZUN VE GÜÇLÜ) ==========
+        let notificationTimers = {}; // Her sipariş için timer
+
         function playNotificationSound() {
-            // Web Audio API ile iki tonlu bildirim sesi oluştur
+            // Web Audio API ile 3 tonlu bildirim sesi oluştur (daha uzun)
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const now = audioContext.currentTime;
                 
-                // Birinci ton
+                // Birinci ton (daha güçlü)
                 const osc1 = audioContext.createOscillator();
                 const gain1 = audioContext.createGain();
                 osc1.connect(gain1);
                 gain1.connect(audioContext.destination);
                 osc1.frequency.value = 800;
                 osc1.type = 'sine';
-                gain1.gain.setValueAtTime(0.3, now);
-                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                gain1.gain.setValueAtTime(0.5, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
                 osc1.start(now);
-                osc1.stop(now + 0.4);
+                osc1.stop(now + 0.5);
                 
-                // İkinci ton (0.3 saniye sonra)
+                // İkinci ton
                 const osc2 = audioContext.createOscillator();
                 const gain2 = audioContext.createGain();
                 osc2.connect(gain2);
                 gain2.connect(audioContext.destination);
                 osc2.frequency.value = 1000;
                 osc2.type = 'sine';
-                gain2.gain.setValueAtTime(0.3, now + 0.3);
-                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+                gain2.gain.setValueAtTime(0.5, now + 0.3);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
                 osc2.start(now + 0.3);
-                osc2.stop(now + 0.7);
+                osc2.stop(now + 0.8);
+                
+                // Üçüncü ton (daha yüksek)
+                const osc3 = audioContext.createOscillator();
+                const gain3 = audioContext.createGain();
+                osc3.connect(gain3);
+                gain3.connect(audioContext.destination);
+                osc3.frequency.value = 1200;
+                osc3.type = 'sine';
+                gain3.gain.setValueAtTime(0.4, now + 0.6);
+                gain3.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+                osc3.start(now + 0.6);
+                osc3.stop(now + 1.0);
             } catch (err) {
                 console.log('Ses oynatılamadı:', err);
+            }
+        }
+        
+        // Sipariş için tekrarlayan bildirim başlat (10 saniye arayla)
+        function startRepeatNotification(orderId) {
+            // Önceki timer varsa temizle
+            if (notificationTimers[orderId]) {
+                clearInterval(notificationTimers[orderId]);
+            }
+            
+            // Her 10 saniyede bir bildirim çal
+            notificationTimers[orderId] = setInterval(() => {
+                const order = orders.find(o => o.id === orderId);
+                if (!order || order.status !== 'pending') {
+                    // Sipariş bulunamazsa veya durumu değişmişse timer'ı durdur
+                    clearInterval(notificationTimers[orderId]);
+                    delete notificationTimers[orderId];
+                    return;
+                }
+                
+                playNotificationSound();
+            }, 10000); // 10 saniye
+        }
+        
+        // Siparişin bildirimini durdur
+        function stopRepeatNotification(orderId) {
+            if (notificationTimers[orderId]) {
+                clearInterval(notificationTimers[orderId]);
+                delete notificationTimers[orderId];
             }
         }
 
@@ -619,17 +667,36 @@
                     const data = snapshot.val();
                     if (data) {
                         const newOrders = Object.values(data).reverse();
-                        // Yeni sipariş geldiyse ses çal
+                        // Yeni sipariş geldiyse ses çal ve tekrarlayan bildirim başlat
                         if (newOrders.length > lastOrderCount && lastOrderCount > 0) {
-                            playNotificationSound();
-                            // Browser notification da gönder
-                            if (Notification.permission === 'granted') {
-                                new Notification('🎉 Yeni Sipariş!', {
-                                    body: 'Yeni bir sipariş geldi!',
-                                    icon: '🧇'
-                                });
-                            }
+                            const newOrderIds = newOrders.map(o => o.id);
+                            const oldOrderIds = orders.map(o => o.id);
+                            const addedOrders = newOrderIds.filter(id => !oldOrderIds.includes(id));
+                            
+                            addedOrders.forEach(newOrderId => {
+                                playNotificationSound();
+                                // Browser notification da gönder
+                                if (Notification.permission === 'granted') {
+                                    new Notification('🎉 Yeni Sipariş!', {
+                                        body: 'Yeni bir sipariş geldi! #' + newOrderId,
+                                        icon: '🧇',
+                                        tag: 'neworder-' + newOrderId
+                                    });
+                                }
+                                // Tekrarlayan bildirimi başlat
+                                startRepeatNotification(newOrderId);
+                            });
                         }
+                        
+                        // Durumu değişen siparişleri kontrol et (tekrarlayan bildirim'i durdur)
+                        newOrders.forEach(newOrder => {
+                            const oldOrder = orders.find(o => o.id === newOrder.id);
+                            if (oldOrder && oldOrder.status === 'pending' && newOrder.status !== 'pending') {
+                                // Durum değişmişse bildirim tekrarlamayı durdur
+                                stopRepeatNotification(newOrder.id);
+                            }
+                        });
+                        
                         lastOrderCount = newOrders.length;
                         orders = newOrders;
                     } else {
@@ -681,15 +748,73 @@
 
         
 
+        // ========== BİLDİRİM İZNİ YÖNETİMİ ==========
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                console.log('❌ Tarayıcı bildirimleri desteklemiyor');
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                console.log('✅ Bildirim izni zaten verilmiş');
+                return;
+            }
+
+            if (Notification.permission === 'denied') {
+                console.log('❌ Bildirim izni engellendi. Tarayıcı ayarlarından etkinleştirin.');
+                return;
+            }
+
+            // permission === 'default' durumunda izin iste
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    console.log('✅ Bildirim izni verildi');
+                    // İzin verildiğini test edin
+                    new Notification('🎉 YK WAFFLE', {
+                        body: 'Bildirimler bu cihazda aktif! Siparişleri anında alacaksınız.',
+                        icon: '🧇'
+                    });
+                } else if (permission === 'denied') {
+                    console.log('❌ Bildirim izni reddedildi');
+                }
+            }).catch(err => {
+                console.error('Bildirim izni hatası:', err);
+            });
+        }
+
+        // ========== BİLDİRİM DURUMU GÖSTERGESI ==========
+        function updateNotificationBanner() {
+            const banner = document.getElementById('notification-banner');
+            if (!banner) return;
+
+            if (!('Notification' in window)) {
+                banner.className = 'mb-6 p-4 rounded-lg text-sm font-semibold text-center bg-red-100 text-red-700';
+                banner.textContent = '❌ Tarayıcı bildirimleri desteklemiyor';
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                banner.className = 'mb-6 p-4 rounded-lg text-sm font-semibold text-center bg-green-100 text-green-700';
+                banner.textContent = '✅ Bildirimler AKTİF - Yeni siparişleri 10 saniye arayla alacaksınız!';
+            } else if (Notification.permission === 'denied') {
+                banner.className = 'mb-6 p-4 rounded-lg text-sm font-semibold text-center bg-red-100 text-red-700';
+                banner.textContent = '❌ Bildirimler engellendi - Tarayıcı ayarlarından etkinleştirin';
+            } else {
+                banner.className = 'mb-6 p-4 rounded-lg text-sm font-semibold text-center bg-yellow-100 text-yellow-700';
+                banner.textContent = '⚠️ Bildirim izni gerekli - Lütfen cihazınızda bildirim ayarlarını etkinleştirin';
+            }
+        }
+
         // ========== BAŞLANGIÇ ==========
         function init() {
             initFirebase();
             // İlk açılışta varsayılan liste basmıyoruz; Firebase verisi gelince render edilir.
             
             // Browser notification izni iste
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
+            requestNotificationPermission();
+            
+            // Banner'ı güncelle
+            setTimeout(updateNotificationBanner, 500);
             
             // Sayfayı yükle (hash varsa oraya git)
             restorePageFromHash();
@@ -1073,8 +1198,24 @@
             });
             document.getElementById('admin-tab-' + tab).className = 'w-full text-left px-4 py-3 rounded-xl admin-tab-active transition';
 
-            if (tab === 'dashboard') renderAdminDashboard();
-            if (tab === 'orders') renderAdminOrders('today');
+            if (tab === 'dashboard') {
+                renderAdminDashboard();
+                // Pending siparişler için tekrarlayan bildirim başlat
+                orders.filter(o => o.status === 'pending').forEach(o => {
+                    if (!notificationTimers[o.id]) {
+                        startRepeatNotification(o.id);
+                    }
+                });
+            }
+            if (tab === 'orders') {
+                renderAdminOrders('today');
+                // Pending siparişler için tekrarlayan bildirim başlat
+                orders.filter(o => o.status === 'pending').forEach(o => {
+                    if (!notificationTimers[o.id]) {
+                        startRepeatNotification(o.id);
+                    }
+                });
+            }
             if (tab === 'products') renderAdminProducts();
         }
 
@@ -1175,6 +1316,11 @@
             
             const order = orders.find(o => o.id === orderId);
             if (order) {
+                // Eğer durum pending'den başka birşeye değişiyorsa, tekrarlayan bildirimi durdur
+                if (order.status === 'pending' && status !== 'pending') {
+                    stopRepeatNotification(orderId);
+                }
+                
                 order.status = status;
                 // Firebase güncellemesi
                 if (db) {
@@ -1421,6 +1567,8 @@
             if (pageName === 'orders') renderOrders();
             if (pageName === 'admin') {
                 switchAdminTab('dashboard');
+                // 500ms sonra banner'ı güncelle (izin kontrolü bitsin diye)
+                setTimeout(updateNotificationBanner, 500);
             }
             
             // URL hash'i güncelle (sayfayı yenilesen de bu sekmede kalarsın)
