@@ -54,7 +54,7 @@
             <p class="text-sm opacity-80">📍 Yeşilbayır Mah. Sağduyu Cad. 41-G Mamak/Ankara | 📞 0534 721 29 42</p>
         </div>
 
-        <div id="site-status-banner" class="mb-6 rounded-2xl p-4 text-center font-semibold hidden"></div>
+        <div id="site-status-banner" class="fixed top-20 right-4 rounded-full px-4 py-2 text-xs font-semibold shadow-lg z-40 hidden"></div>
 
         <div class="flex gap-6 border-b border-pink-200 mb-6 overflow-x-auto pb-1">
             <button onclick="switchTab('ready')" id="tab-ready" class="tab-active pb-3 px-2 whitespace-nowrap">🧇 Hazır Waffle</button>
@@ -249,7 +249,7 @@
     <!-- ===== ADMIN PANELİ ===== -->
     <div id="page-admin" class="page max-w-6xl mx-auto p-6">
         <!-- BİLDİRİM DURUMU BANNER -->
-        <div id="notification-banner" class="mb-6 p-4 rounded-lg text-sm font-semibold text-center">
+        <div id="notification-banner" class="mb-6 p-4 rounded-lg text-sm font-semibold text-center" style="display: none;">
             <!-- JavaScript ile doldurulacak -->
         </div>
 
@@ -807,11 +807,11 @@
 
             if (banner) {
                 if (siteOpen) {
-                    banner.className = 'mb-6 rounded-2xl p-4 text-center font-semibold bg-green-100 text-green-700';
-                    banner.textContent = '🟢 Sipariş Alma AÇIK. Müşteriler sipariş verebilir.';
+                    banner.className = 'fixed top-20 right-4 rounded-full px-4 py-2 text-xs font-semibold shadow-lg z-40 bg-green-100 text-green-700';
+                    banner.textContent = '🟢 Sipariş Açık';
                 } else {
-                    banner.className = 'mb-6 rounded-2xl p-4 text-center font-semibold bg-red-100 text-red-700';
-                    banner.textContent = '🔴 Sipariş Alma KAPALI. Şu anda yeni sipariş alınmıyor.';
+                    banner.className = 'fixed top-20 right-4 rounded-full px-4 py-2 text-xs font-semibold shadow-lg z-40 bg-red-100 text-red-700';
+                    banner.textContent = '🔴 Sipariş Kapalı';
                 }
                 banner.classList.remove('hidden');
             }
