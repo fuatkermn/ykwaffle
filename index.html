@@ -520,6 +520,13 @@
                         desc: p.desc || ''
                     }));
 
+                    // Güvenli toparlama:
+                    // Eğer veri anormal şekilde azalmışsa (ör. yanlışlıkla tek ürün kalmışsa)
+                    // varsayılan ürünlerde eksik olanları geri yazar ve listeyi tamamlar.
+                    if (remoteProducts.length < 5) {
+                        recoverMissingDefaultProducts(remoteProducts);
+                    }
+
                     // Tek kaynak Firebase: silinen ürün geri gelmez
                     products = remoteProducts;
 
@@ -546,6 +553,32 @@
             db.ref('products').set(updates).catch((err) => {
                 console.error('Varsayılan ürünleri Firebase\'e yazma hatası:', err);
             });
+        }
+
+        function recoverMissingDefaultProducts(currentRemoteProducts) {
+            if (!db) return;
+
+            const existingIds = new Set(currentRemoteProducts.map(p => p.id));
+            const missingDefaults = DEFAULT_PRODUCTS.filter(p => !existingIds.has(p.id));
+            if (missingDefaults.length === 0) return;
+
+            const updates = {};
+            missingDefaults.forEach((p) => {
+                updates[p.id] = {
+                    name: p.name,
+                    price: p.price,
+                    category: p.category,
+                    desc: p.desc || ''
+                };
+            });
+
+            db.ref('products').update(updates)
+                .then(() => {
+                    console.warn('⚠️ Ürün listesi eksikti, varsayılan ürünler geri yüklendi.');
+                })
+                .catch((err) => {
+                    console.error('Eksik varsayılan ürünleri geri yükleme hatası:', err);
+                });
         }
 
         // ========== TELEFON DOĞRULAMA ==========
