@@ -66,15 +66,8 @@
 
         <!-- Hazır Waffle -->
         <div id="section-ready" class="menu-section active">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="ready-products">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg
                 <!-- Ürünler JavaScript ile buraya gelecek -->
-            </div>
-        </div>
-
-        <!-- Taban Seçenekleri -->
-        <div id="section-bases" class="menu-section">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="bases-products">
-                <!-- Taban ürünleri JavaScript ile buraya gelecek -->
             </div>
         </div>
 
@@ -370,7 +363,6 @@
                     </div>
                     <div class="mb-6 flex gap-2">
                         <button onclick="filterProducts('ready', this)" class="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-semibold">🧇 Waffles</button>
-                        <button onclick="filterProducts('bases', this)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">🌸 Tabanlar</button>
                         <button onclick="filterProducts('cold', this)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">🥤 Soğuk</button>
                         <button onclick="filterProducts('hot', this)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">☕ Sıcak</button>
                     </div>
@@ -492,11 +484,6 @@
             { id: 'r7', name: 'Bardakta Waffle', price: 250, category: 'ready', desc: 'Pratik waffle' },
             { id: 'r8', name: 'Double Waffle', price: 450, category: 'ready', desc: 'İki kat lezzet' },
             { id: 'r9', name: 'Çiçek Waffle', price: 250, category: 'ready', desc: 'Özel çiçek taban' },
-            // Taban Seçenekleri (bases kategorisi)
-            { id: 'b1', name: 'Çiçek Waffle', price: 300, category: 'bases', desc: '🌸 Özel çiçek waffle tabanı', image: '' },
-            { id: 'b2', name: 'Bubble Kase', price: 350, category: 'bases', desc: '🥣 Bubble waffle kase servisi', image: '' },
-            { id: 'b3', name: 'Bubble Servis', price: 500, category: 'bases', desc: '🍽️ Özel bubble waffle servis', image: '' },
-            { id: 'b4', name: 'Bardakta Waffle', price: 350, category: 'bases', desc: '🥤 Pratik bardakta waffle', image: '' },
             { id: 'c1', name: 'Coca Cola', price: 70, category: 'cold', desc: '330ml' },
             { id: 'c2', name: 'Fanta', price: 70, category: 'cold', desc: '330ml' },
             { id: 'c3', name: 'Sprite', price: 70, category: 'cold', desc: '330ml' },
@@ -960,12 +947,10 @@
 
         function renderProducts() {
             const ready = products.filter(p => p.category === 'ready');
-            const bases = products.filter(p => p.category === 'bases');
             const cold = products.filter(p => p.category === 'cold');
             const hot = products.filter(p => p.category === 'hot');
 
             document.getElementById('ready-products').innerHTML = ready.map(p => productCard(p)).join('');
-            document.getElementById('bases-products').innerHTML = bases.map(p => productCard(p)).join('');
             document.getElementById('cold-products').innerHTML = cold.map(p => drinkCard(p)).join('');
             document.getElementById('hot-products').innerHTML = hot.map(p => drinkCard(p)).join('');
         }
