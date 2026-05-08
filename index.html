@@ -59,14 +59,13 @@
         <div class="flex gap-6 border-b border-pink-200 mb-6 overflow-x-auto pb-1">
             <button onclick="switchTab('ready')" id="tab-ready" class="tab-active pb-3 px-2 whitespace-nowrap">🧇 Hazır Waffle</button>
             <button onclick="switchTab('bases')" id="tab-bases" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">🌸 Taban Seçenekleri</button>
-            <button onclick="switchTab('custom')" id="tab-custom" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">✨ Kendi Waffle'ım</button>
-            <button onclick="switchTab('cold')" id="tab-cold" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">🥤 Soğuk İçecekler</button>
+            <button onclick="switchTab('custom')" id="tab-custom" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber
             <button onclick="switchTab('hot')" id="tab-hot" class="pb-3 px-2 text-gray-500 whitespace-nowrap hover:text-amber-600">☕ Sıcak İçecekler</button>
         </div>
 
         <!-- Hazır Waffle -->
         <div id="section-ready" class="menu-section active">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="ready-products">
                 <!-- Ürünler JavaScript ile buraya gelecek -->
             </div>
         </div>
