@@ -480,6 +480,7 @@
                 });
                 
                 loadOrdersFromFirebase();
+                loadProductsFromFirebase();
                 loadOrdersFromLocalStorage();
                 
                 // Kaydedilmiş admin oturumu varsa yükle
@@ -493,6 +494,33 @@
                 console.error('Firebase hatası:', err);
                 // Offline mode
                 loadOrdersFromLocalStorage();
+            }
+        }
+
+        function loadProductsFromFirebase() {
+            if (!db) return;
+            try {
+                db.ref('products').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (!data) return;
+
+                    const remoteProducts = Object.entries(data).map(([id, p]) => ({
+                        id,
+                        name: p.name,
+                        price: Number(p.price) || 0,
+                        category: p.category || 'ready',
+                        desc: p.desc || ''
+                    }));
+
+                    // Firebase'de ürünler varsa yereli onunla senkronla
+                    if (remoteProducts.length > 0) {
+                        products = remoteProducts;
+                        renderProducts();
+                        renderAdminProducts();
+                    }
+                });
+            } catch (err) {
+                console.error('Ürünleri Firebase\'den yükleme hatası:', err);
             }
         }
 
@@ -1191,7 +1219,8 @@
                 db.ref('products/' + id).set({
                     name: name,
                     price: parseInt(priceStr),
-                    category: category
+                    category: category,
+                    desc: ''
                 });
             }
             
@@ -1224,7 +1253,9 @@
             if (db) {
                 db.ref('products/' + id).update({
                     name: newName,
-                    price: parseInt(newPrice)
+                    price: parseInt(newPrice),
+                    category: p.category,
+                    desc: p.desc || ''
                 });
             }
             
