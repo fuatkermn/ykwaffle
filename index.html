@@ -411,7 +411,9 @@
             { id: 'h5', name: 'Türk Kahvesi', price: 75, category: 'hot', desc: '' },
             { id: 'h6', name: 'Çay', price: 75, category: 'hot', desc: '' }
         ];
-        let products = [...DEFAULT_PRODUCTS];
+        // Ürünler yalnızca Firebase'den gösterilir.
+        // Böylece farklı tarayıcılarda başlangıçta eski/varsayılan ürün görünmez.
+        let products = [];
 
         let cart = [];
         let orders = [];
@@ -444,18 +446,18 @@
         }
 
         function getAdminSessionExpiry() {
-            return parseInt(localStorage.getItem('ykwaffle_admin_session_expiry') || '0', 10);
+            return parseInt(sessionStorage.getItem('ykwaffle_admin_session_expiry') || '0', 10);
         }
 
         function setAdminSession() {
             const expiry = Date.now() + (ADMIN_SESSION_HOURS * 60 * 60 * 1000);
-            localStorage.setItem('ykwaffle_admin_session_expiry', String(expiry));
+            sessionStorage.setItem('ykwaffle_admin_session_expiry', String(expiry));
             adminSessionExpiry = expiry;
             return expiry;
         }
 
         function clearAdminSession() {
-            localStorage.removeItem('ykwaffle_admin_session_expiry');
+            sessionStorage.removeItem('ykwaffle_admin_session_expiry');
             adminSessionExpiry = null;
         }
 
@@ -680,8 +682,7 @@
         // ========== BAŞLANGIÇ ==========
         function init() {
             initFirebase();
-            renderProducts();
-            renderAdminProducts();
+            // İlk açılışta varsayılan liste basmıyoruz; Firebase verisi gelince render edilir.
             
             // Browser notification izni iste
             if ('Notification' in window && Notification.permission === 'default') {
