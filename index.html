@@ -293,7 +293,10 @@
                 <div id="admin-section-orders" class="admin-section">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-2xl font-bold text-gray-800">📋 Sipariş Yönetimi</h2>
-                        <span id="admin-current-day" class="text-sm font-semibold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">Bugün</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="clearOrderHistory()" class="text-sm font-semibold bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-full">🗑️ Geçmişi Sil</button>
+                            <span id="admin-current-day" class="text-sm font-semibold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">Bugün</span>
+                        </div>
                     </div>
                     <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
                         <button onclick="filterAdminOrders('today')" class="px-4 py-2 bg-amber-500 text-white rounded-full text-sm font-semibold whitespace-nowrap">Bugün</button>
@@ -1156,6 +1159,43 @@
                 alert('✅ Sipariş #' + orderId + ' durumu güncellendi: ' + status);
                 renderAdminOrders(currentAdminFilter);
                 renderAdminDashboard();
+            }
+        }
+
+        function clearOrderHistory() {
+            if (!isAdminLoggedIn()) {
+                alert('❌ Admin oturumu süresi dolmuş');
+                return;
+            }
+
+            const confirmed = confirm('Tüm sipariş geçmişi silinecek. Emin misiniz?');
+            if (!confirmed) return;
+
+            const doubleConfirmed = confirm('Bu işlem geri alınamaz. Devam edilsin mi?');
+            if (!doubleConfirmed) return;
+
+            if (db) {
+                db.ref('orders').remove()
+                    .then(() => {
+                        orders = [];
+                        saveOrdersToLocalStorage();
+                        renderOrders();
+                        renderAdminOrders('all');
+                        renderAdminDashboard();
+                        saveAdminLogToFirebase('Sipariş Geçmişi Silme', 'Admin', 'Tüm sipariş geçmişi temizlendi');
+                        alert('✅ Sipariş geçmişi başarıyla silindi.');
+                    })
+                    .catch((err) => {
+                        alert('❌ Silme sırasında hata oluştu: ' + err.message);
+                    });
+            } else {
+                // Offline fallback
+                orders = [];
+                saveOrdersToLocalStorage();
+                renderOrders();
+                renderAdminOrders('all');
+                renderAdminDashboard();
+                alert('✅ Sipariş geçmişi yerel olarak temizlendi.');
             }
         }
 
