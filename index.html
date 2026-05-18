@@ -398,46 +398,58 @@
         let notificationTimers = {}; // Her sipariş için timer
 
         function playNotificationSound() {
-            // Web Audio API ile 3 tonlu bildirim sesi oluştur (daha uzun)
+            // Web Audio API ile geliştirilmiş bildirim sesi oluştur (dikkat çekici ve farklı)
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const now = audioContext.currentTime;
                 
-                // Birinci ton (daha güçlü)
+                // Kısa ve keskin birinci ton (yüksek)
                 const osc1 = audioContext.createOscillator();
                 const gain1 = audioContext.createGain();
                 osc1.connect(gain1);
                 gain1.connect(audioContext.destination);
-                osc1.frequency.value = 800;
-                osc1.type = 'sine';
-                gain1.gain.setValueAtTime(0.5, now);
-                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc1.frequency.value = 1200;
+                osc1.type = 'square';
+                gain1.gain.setValueAtTime(0.6, now);
+                gain1.gain.exponentialRampToValueAtTime(0.02, now + 0.15);
                 osc1.start(now);
-                osc1.stop(now + 0.5);
+                osc1.stop(now + 0.15);
                 
-                // İkinci ton
+                // İkinci keskin ton (daha da yüksek)
                 const osc2 = audioContext.createOscillator();
                 const gain2 = audioContext.createGain();
                 osc2.connect(gain2);
                 gain2.connect(audioContext.destination);
-                osc2.frequency.value = 1000;
-                osc2.type = 'sine';
-                gain2.gain.setValueAtTime(0.5, now + 0.3);
-                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
-                osc2.start(now + 0.3);
-                osc2.stop(now + 0.8);
+                osc2.frequency.value = 1500;
+                osc2.type = 'square';
+                gain2.gain.setValueAtTime(0.6, now + 0.2);
+                gain2.gain.exponentialRampToValueAtTime(0.02, now + 0.35);
+                osc2.start(now + 0.2);
+                osc2.stop(now + 0.35);
                 
-                // Üçüncü ton (daha yüksek)
+                // Üçüncü keskin ton (en yüksek - dikkat çekici)
                 const osc3 = audioContext.createOscillator();
                 const gain3 = audioContext.createGain();
                 osc3.connect(gain3);
                 gain3.connect(audioContext.destination);
-                osc3.frequency.value = 1200;
-                osc3.type = 'sine';
-                gain3.gain.setValueAtTime(0.4, now + 0.6);
-                gain3.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
-                osc3.start(now + 0.6);
-                osc3.stop(now + 1.0);
+                osc3.frequency.value = 1800;
+                osc3.type = 'square';
+                gain3.gain.setValueAtTime(0.6, now + 0.4);
+                gain3.gain.exponentialRampToValueAtTime(0.02, now + 0.55);
+                osc3.start(now + 0.4);
+                osc3.stop(now + 0.55);
+                
+                // Dördüncü ton (düşük frekans - bass)
+                const osc4 = audioContext.createOscillator();
+                const gain4 = audioContext.createGain();
+                osc4.connect(gain4);
+                gain4.connect(audioContext.destination);
+                osc4.frequency.value = 900;
+                osc4.type = 'square';
+                gain4.gain.setValueAtTime(0.7, now + 0.6);
+                gain4.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+                osc4.start(now + 0.6);
+                osc4.stop(now + 0.8);
             } catch (err) {
                 console.log('Ses oynatılamadı:', err);
             }
@@ -1523,6 +1535,7 @@
                                     ${order.status !== 'pending' ? '' : '<button onclick="updateOrderStatus(\''+order.id+'\', \'preparing\')" class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold">👨‍🍳 Başla</button>'}
                                     ${order.status !== 'preparing' && order.status !== 'pending' ? '' : '<button onclick="updateOrderStatus(\''+order.id+'\', \'ready\')" class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold">✅ Hazır</button>'}
                                     ${order.status !== 'ready' && order.status !== 'preparing' ? '' : '<button onclick="updateOrderStatus(\''+order.id+'\', \'delivered\')" class="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-semibold">📦 Verdi</button>'}
+                                    ${order.status === 'cancelled' ? '' : '<button onclick="cancelOrder(\''+order.id+'\')" class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold">❌ İptal Et</button>'}
                                     <span class="text-xs px-2 py-1 rounded-lg ${statusColors[order.status]}">${statusEmoji[order.status]} ${order.status === 'pending' ? 'Bekliyor' : order.status === 'preparing' ? 'Hazırlı' : order.status === 'ready' ? 'Hazır' : order.status === 'delivered' ? 'Teslim' : 'İptal'}</span>
                                 </div>
                             </div>
@@ -1572,6 +1585,33 @@
                 renderAdminOrders(currentAdminFilter);
                 renderAdminDashboard();
             }
+        }
+
+        function cancelOrder(orderId) {
+            if (!isAdminLoggedIn()) {
+                alert('❌ Admin oturumu süresi dolmuş');
+                return;
+            }
+            
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            const confirmed = confirm('Sipariş #' + orderId + ' iptal edilecek. Emin misiniz?');
+            if (!confirmed) return;
+            
+            // Tekrarlayan bildirimi durdur
+            stopRepeatNotification(orderId);
+            
+            order.status = 'cancelled';
+            // Firebase güncellemesi
+            if (db) {
+                db.ref('orders/' + orderId + '/status').set('cancelled');
+            }
+            saveOrdersToLocalStorage();
+            saveAdminLogToFirebase('Sipariş İptal', 'Admin', 'Sipariş #' + orderId + ' iptal edildi');
+            alert('✅ Sipariş #' + orderId + ' iptal edildi');
+            renderAdminOrders(currentAdminFilter);
+            renderAdminDashboard();
         }
 
         function clearOrderHistory() {
