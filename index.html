@@ -11,6 +11,8 @@
     <!-- Firebase SDK (Compat - Eski kodlarla uyumlu) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHM4paNBdhC34hX7EiCtZiX3d3x1BI80"></script>
     <style>
         body { font-family: 'Poppins', sans-serif; }
         .tab-active { border-bottom: 3px solid #ec4899; color: #ec4899; font-weight: 700; }
@@ -29,6 +31,12 @@
         .admin-tab-active { background: #fbcfe8; color: #831843; font-weight: 700; }
         .admin-section { display: none; }
         .admin-section.active { display: block; }
+        #map { height: 400px; border-radius: 0.75rem; }
+        .message-box { max-height: 400px; overflow-y: auto; }
+        .message-item { margin: 8px 0; padding: 8px; border-radius: 8px; }
+        .message-admin { background: #e0e7ff; text-align: right; }
+        .message-customer { background: #fce7f3; text-align: left; }
+        .badge-disabled { opacity: 0.5; filter: grayscale(100%); }
     </style>
 </head>
 <body class="bg-gradient-to-b from-pink-50 to-white pb-20">
@@ -194,7 +202,14 @@
             <div id="input-delivery" class="hidden space-y-4">
                 <div><label class="block text-sm font-semibold text-gray-700 mb-2">Ad Soyad</label><input type="text" id="customer-name" placeholder="Adınız Soyadınız" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
                 <div><label class="block text-sm font-semibold text-gray-700 mb-2">Telefon</label><input type="tel" id="customer-phone" placeholder="05XX XXX XX XX" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></div>
-                <div><label class="block text-sm font-semibold text-gray-700 mb-2">Adres</label><textarea id="customer-address" rows="3" placeholder="Sokak, Bina No, Daire, Semt..." class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></textarea></div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">📍 Teslimat Adresi</label>
+                    <div class="mb-3 bg-amber-50 rounded-xl p-3 border-2 border-amber-200">
+                        <p class="text-sm text-amber-800 mb-2">🗺️ Harita üzerinde adresinizi seçmek için tıklayın</p>
+                        <button onclick="openMapModal()" class="w-full bg-amber-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-amber-600">Harita Üzerinde Seç</button>
+                    </div>
+                    <textarea id="customer-address" rows="3" placeholder="Sokak, Bina No, Daire, Semt... veya Harita Seç'i kullanın" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></textarea>
+                </div>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-3">Ödeme Yöntemi</label>
@@ -204,6 +219,7 @@
                 </div>
             </div>
             <div><label class="block text-sm font-semibold text-gray-700 mb-2">Sipariş Notu (Opsiyonel)</label><textarea id="order-note" rows="2" placeholder="Alerji, özel istek vb." class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></textarea></div>
+            <div><label class="block text-sm font-semibold text-gray-700 mb-2">💬 Admin'e Mesaj (Opsiyonel)</label><textarea id="customer-message" rows="2" placeholder="Özel bir talep veya soru varsa yazın..." class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition"></textarea></div>
             <div class="bg-pink-50 rounded-xl p-4 border-2 border-pink-200">
                 <div class="flex justify-between items-center mb-4"><span class="text-gray-700 font-semibold">Ödenecek Tutar:</span><span id="checkout-total" class="text-3xl font-bold text-pink-600">0 ₺</span></div>
                 <button id="btn-place-order" onclick="placeOrder()" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-600 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">✅ Siparişi Onayla</button>
@@ -266,6 +282,7 @@
                         <button onclick="switchAdminTab('dashboard')" id="admin-tab-dashboard" class="w-full text-left px-4 py-3 rounded-xl admin-tab-active transition"><span class="mr-2">📊</span> Dashboard</button>
                         <button onclick="switchAdminTab('orders')" id="admin-tab-orders" class="w-full text-left px-4 py-3 rounded-xl hover:bg-pink-50 text-gray-700 transition"><span class="mr-2">📋</span> Siparişler</button>
                         <button onclick="switchAdminTab('products')" id="admin-tab-products" class="w-full text-left px-4 py-3 rounded-xl hover:bg-pink-50 text-gray-700 transition"><span class="mr-2">🍽️</span> Ürünler</button>
+                        <button onclick="switchAdminTab('messages')" id="admin-tab-messages" class="w-full text-left px-4 py-3 rounded-xl hover:bg-pink-50 text-gray-700 transition"><span class="mr-2">💬</span> Mesajlar</button>
                         <button onclick="switchAdminTab('settings')" id="admin-tab-settings" class="w-full text-left px-4 py-3 rounded-xl hover:bg-pink-50 text-gray-700 transition"><span class="mr-2">⚙️</span> Ayarlar</button>
                         <button onclick="adminLogout()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition mt-4"><span class="mr-2">🚪</span> Çıkış Yap</button>
                     </nav>
@@ -379,6 +396,20 @@
                         <button onclick="saveSettings()" class="bg-amber-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-amber-600 transition">💾 Kaydet</button>
                     </div>
                 </div>
+
+                <!-- Mesajlar -->
+                <div id="admin-section-messages" class="admin-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">💬 Müşteri Mesajları</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div id="admin-messages-list" class="space-y-3 max-h-96 overflow-y-auto bg-white rounded-2xl p-4 shadow-sm"></div>
+                        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col">
+                            <h3 class="font-bold text-gray-800 mb-3">📝 Seçili Müşteriye Yanıt</h3>
+                            <div id="admin-selected-customer" class="text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">Müşteri seçiniz</div>
+                            <textarea id="admin-reply-message" placeholder="Yanıtınızı yazınız..." rows="4" class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 mb-3 focus:border-amber-500 focus:outline-none"></textarea>
+                            <button onclick="sendAdminReply()" class="bg-green-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-600">📤 Gönder</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -391,6 +422,23 @@
             <button onclick="showPage('orders')" class="flex flex-col items-center gap-1 hover:text-amber-600 transition p-2"><span class="text-xl">📋</span><span>Siparişlerim</span></button>
         </div>
     </div>
+
+    <!-- HArita Modal -->
+    <div id="map-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-96 overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center bg-gradient-to-r from-pink-400 to-rose-500 p-4 text-white">
+                <h3 class="text-xl font-bold">🗺️ Adresinizi Harita Üzerinden Seçin</h3>
+                <button onclick="closeMapModal()" class="text-xl hover:bg-white hover:bg-opacity-20 px-2 py-1 rounded">✕</button>
+            </div>
+            <div id="map" class="flex-1"></div>
+            <div class="bg-pink-50 p-4 flex gap-2 border-t border-pink-200">
+                <button onclick="confirmMapLocation()" class="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600">✅ Konumu Seç</button>
+                <button onclick="closeMapModal()" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400">❌ İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALT MENÜ -->
 
     <!-- JAVASCRIPT -->
     <script>
@@ -517,9 +565,14 @@
 
         let cart = [];
         let orders = [];
+        let messages = []; // Müşteri-Admin mesajları
+        let map = null; // Google Maps instance
+        let selectedLocation = null; // Harita seçimi
+        let disabledProducts = []; // Kapalı ürünler
         let orderType = 'table';
         let paymentMethod = 'card';
         let currentAdminFilter = 'all';
+        let currentAdminSelectedCustomerId = null; // Seçili müşteri
         let siteOpen = true;
         const SITE_STATUS_KEY = 'ykwaffle_site_open';
         let db = null;
@@ -590,6 +643,8 @@
                 loadOrdersFromFirebase();
                 loadSiteStatusFromFirebase();
                 loadProductsFromFirebase();
+                loadMessagesFromFirebase();
+                loadDisabledProductsFromFirebase();
                 loadOrdersFromLocalStorage();
                 
                 // Kaydedilmiş admin oturumu varsa yükle
@@ -934,6 +989,265 @@
             }
         }
 
+        // ========== HARITA FONKSİYONLARI ==========
+        function openMapModal() {
+            document.getElementById('map-modal').classList.remove('hidden');
+            setTimeout(() => {
+                if (!map) {
+                    const ankara = { lat: 39.9334, lng: 32.8597 };
+                    map = new google.maps.Map(document.getElementById('map'), {
+                        zoom: 13,
+                        center: ankara,
+                        mapTypeControl: true,
+                        fullscreenControl: true
+                    });
+                    
+                    // Marker ekleme dinleyicisi
+                    map.addListener('click', (mapsMouseEvent) => {
+                        selectedLocation = mapsMouseEvent.latLng;
+                        placeMarker(selectedLocation);
+                    });
+                } else {
+                    map.setCenter(new google.maps.LatLng(39.9334, 32.8597));
+                }
+            }, 100);
+        }
+
+        function closeMapModal() {
+            document.getElementById('map-modal').classList.add('hidden');
+        }
+
+        function placeMarker(location) {
+            // Eski marker'ları temizle
+            const markers = document.querySelectorAll('[data-marker="true"]');
+            markers.forEach(m => m.remove && m.remove());
+            
+            new google.maps.Marker({
+                position: location,
+                map: map,
+                title: 'Teslimat Konumu'
+            });
+        }
+
+        function confirmMapLocation() {
+            if (!selectedLocation) {
+                alert('❌ Lütfen harita üzerinde bir konum seçiniz!');
+                return;
+            }
+            
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ location: selectedLocation }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    document.getElementById('customer-address').value = results[0].formatted_address || 
+                        `${selectedLocation.lat()}, ${selectedLocation.lng()}`;
+                    closeMapModal();
+                    alert('✅ Adres seçildi!');
+                } else {
+                    // Konum bilgisi yoksa koordinatları kullan
+                    document.getElementById('customer-address').value = `${selectedLocation.lat()}, ${selectedLocation.lng()}`;
+                    closeMapModal();
+                }
+            });
+        }
+
+        // ========== MESAJ SİSTEMİ ==========
+        function loadMessagesFromFirebase() {
+            if (!db) return;
+            try {
+                db.ref('messages').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    messages = data ? Object.values(data).sort((a, b) => a.timestamp - b.timestamp) : [];
+                    renderAdminMessages();
+                });
+            } catch (err) {
+                console.error('Mesajları yükleme hatası:', err);
+            }
+        }
+
+        function sendCustomerMessage(orderId) {
+            const messageText = document.getElementById('customer-message')?.value;
+            if (!messageText || messageText.trim() === '') return;
+
+            const msg = {
+                id: 'msg_' + Date.now(),
+                orderId: orderId,
+                customerName: document.getElementById('customer-name')?.value || 'Müşteri',
+                customerPhone: document.getElementById('customer-phone')?.value || '-',
+                message: sanitizeInput(messageText),
+                sender: 'customer',
+                timestamp: Date.now(),
+                date: new Date().toLocaleString('tr-TR'),
+                read: false
+            };
+
+            messages.push(msg);
+            if (db) {
+                db.ref('messages/' + msg.id).set(msg);
+            }
+            
+            document.getElementById('customer-message').value = '';
+            // Push bildirimi admin'e gönder
+            if (Notification.permission === 'granted') {
+                new Notification('💬 Yeni Müşteri Mesajı', {
+                    body: msg.customerName + ': ' + messageText.substring(0, 50),
+                    icon: '💬',
+                    tag: 'message-' + orderId
+                });
+            }
+        }
+
+        function sendAdminReply() {
+            if (!currentAdminSelectedCustomerId) {
+                alert('❌ Lütfen müşteri seçiniz!');
+                return;
+            }
+
+            const replyText = document.getElementById('admin-reply-message').value;
+            if (!replyText || replyText.trim() === '') {
+                alert('❌ Lütfen mesaj yazınız!');
+                return;
+            }
+
+            // Son müşteri mesajını bul
+            const lastCustomerMsg = messages.filter(m => m.customerPhone === currentAdminSelectedCustomerId).pop();
+            if (!lastCustomerMsg) {
+                alert('❌ Müşteri mesajı bulunamadı!');
+                return;
+            }
+
+            const reply = {
+                id: 'msg_' + Date.now(),
+                orderId: lastCustomerMsg.orderId,
+                customerPhone: currentAdminSelectedCustomerId,
+                message: sanitizeInput(replyText),
+                sender: 'admin',
+                timestamp: Date.now(),
+                date: new Date().toLocaleString('tr-TR'),
+                read: true
+            };
+
+            messages.push(reply);
+            if (db) {
+                db.ref('messages/' + reply.id).set(reply);
+            }
+
+            document.getElementById('admin-reply-message').value = '';
+            saveAdminLogToFirebase('Müşteri Mesajı Yanıtı', 'Admin', 'Müşteriye yanıt gönderildi');
+            alert('✅ Yanıt gönderildi!');
+            renderAdminMessages();
+        }
+
+        function renderAdminMessages() {
+            // Müşteri listesini oluştur
+            const uniqueCustomers = [...new Set(messages.map(m => m.customerPhone))];
+            const container = document.getElementById('admin-messages-list');
+            
+            if (uniqueCustomers.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">Henüz mesaj yok</p>';
+                return;
+            }
+
+            container.innerHTML = uniqueCustomers.map(phone => {
+                const customerMsgs = messages.filter(m => m.customerPhone === phone);
+                const lastMsg = customerMsgs[customerMsgs.length - 1];
+                const unreadCount = customerMsgs.filter(m => !m.read && m.sender === 'customer').length;
+                
+                return `
+                    <div onclick="selectCustomerMessages('${phone}')" class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-amber-50 transition border-l-4 ${currentAdminSelectedCustomerId === phone ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-800">${lastMsg.customerName}</p>
+                                <p class="text-xs text-gray-500">${phone}</p>
+                                <p class="text-sm text-gray-600 mt-1 truncate">${lastMsg.message}</p>
+                                <p class="text-xs text-gray-400 mt-1">${lastMsg.date}</p>
+                            </div>
+                            ${unreadCount > 0 ? `<span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">${unreadCount}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectCustomerMessages(phone) {
+            currentAdminSelectedCustomerId = phone;
+            const customerMsgs = messages.filter(m => m.customerPhone === phone);
+            const lastMsg = customerMsgs[customerMsgs.length - 1];
+            
+            document.getElementById('admin-selected-customer').innerHTML = `
+                <div class="font-semibold">${lastMsg.customerName}</div>
+                <div class="text-xs">📞 ${phone}</div>
+                <div class="text-xs mt-2 font-semibold">Mesaj Geçmişi:</div>
+                <div class="text-xs mt-2 max-h-24 overflow-y-auto space-y-1">
+                    ${customerMsgs.map(m => `
+                        <div class="p-1 ${m.sender === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-pink-100 text-pink-700'} rounded">
+                            <span class="font-bold">${m.sender === 'admin' ? '(Admin)' : '(Müşteri)'}:</span> ${m.message}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            renderAdminMessages();
+        }
+
+        // ========== ÜRÜN KAPATMA/AÇMA (BAKIM MODU) ==========
+        function toggleProductDisable(productId) {
+            if (!isAdminLoggedIn()) {
+                alert('❌ Admin oturumu süresi dolmuş');
+                return;
+            }
+
+            const isDisabled = disabledProducts.includes(productId);
+            if (isDisabled) {
+                disabledProducts = disabledProducts.filter(id => id !== productId);
+            } else {
+                disabledProducts.push(productId);
+            }
+
+            if (db) {
+                db.ref('settings/disabled_products').set(disabledProducts);
+            }
+
+            saveAdminLogToFirebase('Ürün Durumu Değişimi', 'Admin', 'Ürün ' + (isDisabled ? 'açıldı' : 'kapatıldı'));
+            renderProducts();
+            renderAdminProducts();
+            alert('✅ Ürün ' + (isDisabled ? 'açıldı' : 'kapatıldı') + '!');
+        }
+
+        function loadDisabledProductsFromFirebase() {
+            if (!db) return;
+            try {
+                db.ref('settings/disabled_products').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    disabledProducts = Array.isArray(data) ? data : [];
+                    renderProducts();
+                });
+            } catch (err) {
+                console.error('Kapalı ürünleri yükleme hatası:', err);
+            }
+        }
+
+        // ========== GELİŞTİRİLMİŞ PUSH BİLDİRİMLERİ ==========
+        function notifyCustomerOrderStatus(orderId, newStatus) {
+            // Müşteri tarafında sipariş durumu değişimi bildirimi
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const statusMessages = {
+                'preparing': '👨‍🍳 Siparişiniz hazırlanıyor!',
+                'ready': '✅ Siparişiniz hazır! Lütfen almaya gelin veya kurye hazır.',
+                'delivered': '📦 Siparişiniz teslim edildi. Afiyet olsun!'
+            };
+
+            if (Notification.permission === 'granted' && statusMessages[newStatus]) {
+                new Notification('🧇 YK WAFFLE - Sipariş #' + orderId, {
+                    body: statusMessages[newStatus],
+                    icon: '🧇',
+                    tag: 'order-' + orderId,
+                    requireInteraction: newStatus !== 'preparing'
+                });
+            }
+        }
+
         // ========== BAŞLANGIÇ ==========
         function init() {
             initFirebase();
@@ -957,9 +1271,11 @@
         }
 
         function renderProducts() {
-            const ready = products.filter(p => p.category === 'ready');
-            const cold = products.filter(p => p.category === 'cold');
-            const hot = products.filter(p => p.category === 'hot');
+            // Kapalı ürünleri hariç tut
+            const availableProducts = products.filter(p => !disabledProducts.includes(p.id));
+            const ready = availableProducts.filter(p => p.category === 'ready');
+            const cold = availableProducts.filter(p => p.category === 'cold');
+            const hot = availableProducts.filter(p => p.category === 'hot');
 
             document.getElementById('ready-products').innerHTML = ready.map(p => productCard(p)).join('');
             document.getElementById('cold-products').innerHTML = cold.map(p => drinkCard(p)).join('');
@@ -1125,6 +1441,12 @@
             orders.unshift(order);
             saveOrderToFirebase(order);
             saveOrdersToLocalStorage();
+            
+            // Müşteri mesajı varsa gönder
+            if (document.getElementById('customer-message')?.value) {
+                sendCustomerMessage(order.id);
+            }
+            
             cart = [];
             updateCartUI();
             document.getElementById('success-order-id').textContent = '#' + order.id;
@@ -1355,6 +1677,7 @@
                 });
             }
             if (tab === 'products') renderAdminProducts();
+            if (tab === 'messages') renderAdminMessages();
         }
 
         function renderAdminDashboard() {
@@ -1581,6 +1904,10 @@
                 }
                 saveOrdersToLocalStorage();
                 saveAdminLogToFirebase('Sipariş Durumu Güncelleme', 'Admin', 'Sipariş #' + orderId + ' durumu ' + status + ' olarak güncellendi');
+                
+                // Müşteriye push bildirimi gönder
+                notifyCustomerOrderStatus(orderId, status);
+                
                 alert('✅ Sipariş #' + orderId + ' durumu güncellendi: ' + status);
                 renderAdminOrders(currentAdminFilter);
                 renderAdminDashboard();
@@ -1667,22 +1994,27 @@
             const container = document.getElementById('admin-products-list');
             let filtered = currentProductFilter === 'all' ? products : products.filter(p => p.category === currentProductFilter);
             
-            container.innerHTML = filtered.map(p => `
-                <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-pink-300">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <h4 class="font-bold text-gray-800 text-lg">${p.name}</h4>
-                            <p class="text-xs text-gray-500">${p.category === 'ready' ? '🧇 Hazır Waffle' : p.category === 'cold' ? '🥤 Soğuk İçecek' : '☕ Sıcak İçecek'}</p>
-                            <p class="text-pink-600 font-bold text-2xl mt-2">${p.price} ₺</p>
+            container.innerHTML = filtered.map(p => {
+                const isDisabled = disabledProducts.includes(p.id);
+                return `
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-pink-300 ${isDisabled ? 'opacity-50' : ''}">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-1">
+                                ${isDisabled ? '<span class="inline-block bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold mb-2">🚫 KAPALI</span>' : ''}
+                                <h4 class="font-bold text-gray-800 text-lg ${isDisabled ? 'line-through text-gray-400' : ''}">${p.name}</h4>
+                                <p class="text-xs text-gray-500">${p.category === 'ready' ? '🧇 Hazır Waffle' : p.category === 'cold' ? '🥤 Soğuk İçecek' : '☕ Sıcak İçecek'}</p>
+                                <p class="text-pink-600 font-bold text-2xl mt-2">${p.price} ₺</p>
+                            </div>
+                            <span class="text-3xl ${isDisabled ? 'opacity-30' : ''}">${p.category === 'ready' ? '🧇' : p.category === 'cold' ? '🥤' : '☕'}</span>
                         </div>
-                        <span class="text-3xl">${p.category === 'ready' ? '🧇' : p.category === 'cold' ? '🥤' : '☕'}</span>
+                        <div class="flex gap-2 justify-end border-t pt-3 flex-wrap">
+                            <button onclick="toggleProductDisable('${p.id}')" class="px-3 py-1 ${isDisabled ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'} rounded-lg text-sm font-semibold">${isDisabled ? '✅ Aç' : '🚫 Kapat'}</button>
+                            <button onclick="editProduct('${p.id}')" class="px-3 py-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 text-sm font-semibold">✏️ Düzenle</button>
+                            <button onclick="deleteProduct('${p.id}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm font-semibold">🗑️ Sil</button>
+                        </div>
                     </div>
-                    <div class="flex gap-2 justify-end border-t pt-3">
-                        <button onclick="editProduct('${p.id}')" class="px-3 py-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 text-sm font-semibold">✏️ Düzenle</button>
-                        <button onclick="deleteProduct('${p.id}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm font-semibold">🗑️ Sil</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function showAddProductModal() {
